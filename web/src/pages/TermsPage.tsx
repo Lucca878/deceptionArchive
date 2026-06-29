@@ -1,7 +1,18 @@
-import { archiveData } from '../data/archiveData'
+import { useArchiveData } from '../data/archiveClient'
 
 export function TermsPage() {
-  const { terms } = archiveData
+  const { data } = useArchiveData()
+
+  if (!data) {
+    return (
+      <section className="panel">
+        <p className="eyebrow">Loading</p>
+        <h2>Archive data is loading</h2>
+      </section>
+    )
+  }
+
+  const { terms } = data
 
   return (
     <section className="panel">

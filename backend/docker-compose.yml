@@ -1,0 +1,12 @@
+services:
+  archive-backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    image: deception-archive-backend:latest
+    container_name: archive-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000"

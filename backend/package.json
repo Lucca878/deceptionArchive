@@ -1,0 +1,11 @@
+{
+  "name": "deception-archive-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.20.5"
+  }
+}

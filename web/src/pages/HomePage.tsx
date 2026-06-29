@@ -2,18 +2,18 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { DatasetCard } from '../components/DatasetCard'
 import { MultiDropdown } from '../components/MultiDropdown'
-import { archiveData } from '../data/archiveData'
-import { csvPreviewsByDatasetId } from '../data/csvPreviews'
+import { useArchiveData } from '../data/archiveClient'
 import { toTitleCase } from '../utils/text'
 
 export function HomePage() {
-  const { datasets } = archiveData
-
   const [query, setQuery] = useState('')
   const [languages_sel, setLanguagesSel] = useState<string[]>([])
   const [deceptionTypes_sel, setDeceptionTypesSel] = useState<string[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const navigate = useNavigate()
+  const { data } = useArchiveData()
+  const datasets = data?.datasets ?? []
+  const csvPreviewsByDatasetId = data?.csvPreviewsByDatasetId ?? {}
 
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => {
@@ -118,6 +118,15 @@ export function HomePage() {
 
   const hasFilters = query || languages_sel.length > 0 || deceptionTypes_sel.length > 0
   const allVisibleSelected = filtered.length > 0 && filtered.every((d) => selectedIds.has(d.id))
+
+  if (!data) {
+    return (
+      <section className="panel">
+        <p className="eyebrow">Loading</p>
+        <h2>Archive data is loading</h2>
+      </section>
+    )
+  }
 
   return (
     <>

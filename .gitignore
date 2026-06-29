@@ -13,5 +13,9 @@ dist/
 web/dist/
 web/.vite/
 
+# Backend build artifacts
+backend/node_modules/
+backend/dist/
+
 # Large raw dataset files (too big for GitHub)
 web/src/data/LOL/

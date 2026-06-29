@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { archiveData } from '../data/archiveData'
-import { csvPreviewsByDatasetId } from '../data/csvPreviews'
+import { useArchiveData } from '../data/archiveClient'
+import type { DatasetRecord } from '../types/dataset'
 
 const FIELDS: { label: string; key: string }[] = [
   { label: 'Year Range', key: 'yearRange' },
@@ -39,12 +39,14 @@ function downloadCsvFile(filename: string, headers: string[], rows: string[][]) 
 
 export function BulkInspectPage() {
   const [params] = useSearchParams()
+  const { data } = useArchiveData()
   const ids = (params.get('ids') ?? '').split(',').filter(Boolean)
   const datasets = ids
-    .map((id) => archiveData.datasets.find((d) => d.id === id))
-    .filter(Boolean) as typeof archiveData.datasets
+    .map((id) => data?.datasets.find((d) => d.id === id))
+    .filter(Boolean) as DatasetRecord[]
 
   const [showAllCsv, setShowAllCsv] = useState(false)
+  const csvPreviewsByDatasetId = data?.csvPreviewsByDatasetId ?? {}
 
   // Build the combined CSV rows in memory for display and download
   const allHeaders = Array.from(
@@ -82,6 +84,15 @@ export function BulkInspectPage() {
   }
 
   if (!datasets.length) {
+    if (!data) {
+      return (
+        <section className="panel">
+          <p className="eyebrow">Loading</p>
+          <h2>Archive data is loading</h2>
+        </section>
+      )
+    }
+
     return (
       <section className="panel">
         <h2>No datasets selected</h2>

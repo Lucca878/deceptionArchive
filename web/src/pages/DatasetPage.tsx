@@ -1,22 +1,31 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { archiveData } from '../data/archiveData'
-import { csvPreviewsByDatasetId } from '../data/csvPreviews'
+import { useArchiveData } from '../data/archiveClient'
 
 export function DatasetPage() {
   const { datasetId } = useParams()
+  const { data } = useArchiveData()
   const [showAll, setShowAll] = useState(false)
-  const dataset = archiveData.datasets.find((item) => item.id === datasetId)
+  const dataset = data?.datasets.find((item) => item.id === datasetId)
   const sourceAndResearchDesign =
     dataset?.metadata.sourceAndResearchDesign ??
     dataset?.metadata.experimentalDesign ??
     'Not specified'
-  const csvPreview = dataset ? csvPreviewsByDatasetId[dataset.id] : undefined
+  const csvPreview = dataset ? data?.csvPreviewsByDatasetId[dataset.id] : undefined
   const visibleRows = csvPreview
     ? showAll
       ? csvPreview.fullRows
       : csvPreview.previewRows
     : []
+
+  if (!data) {
+    return (
+      <section className="panel">
+        <p className="eyebrow">Loading</p>
+        <h2>Archive data is loading</h2>
+      </section>
+    )
+  }
 
   const downloadCsv = () => {
     if (!csvPreview || !dataset) return
