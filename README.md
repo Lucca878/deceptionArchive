@@ -1,18 +1,21 @@
 # Deception Archive
 
-This repository contains the frontend archive application and a small backend that serves the archive payload as JSON.
+This repo has two moving parts:
 
-## What runs where
+- `web/` is the archive frontend.
+- `backend/` is the small JSON API that serves the archive payload in production.
 
-- Frontend: built from `web/` with Vite + React + TypeScript.
-- Backend: `backend/` serves the archive payload at `/api/archive-payload` and a simple health check at `/health`.
-- Production domain: `lpstudies.net`.
-- Server deploy target: the built frontend is copied to `/var/www/archive` on the Hetzner server.
-- Rollback target: the old study stays on the server in `/var/www/study`.
+The live domain is `lpstudies.net`. The old study stays on the server at `/var/www/study` for rollback.
 
-## Local development
+## URL Map
 
-### Frontend
+- `https://lpstudies.net/` serves the archive frontend from `/var/www/archive`
+- `https://lpstudies.net/api/archive-payload` serves the archive payload JSON
+- `https://lpstudies.net/api/health` checks the backend container health through nginx
+
+## Local Development
+
+### 1) Frontend
 
 ```bash
 cd web
@@ -20,14 +23,7 @@ npm install
 npm run dev
 ```
 
-### Frontend production build
-
-```bash
-cd web
-npm run build
-```
-
-### Backend
+### 2) Backend
 
 ```bash
 cd backend
@@ -35,114 +31,157 @@ npm install
 npm start
 ```
 
-Health check:
+Local backend checks:
 
 ```bash
 curl http://127.0.0.1:3000/health
+curl http://127.0.0.1:3000/api/archive-payload | head
 ```
 
-## How the data works
-
-The archive data is no longer shipped as a giant browser bundle in production.
-
-- In local development, the frontend still loads the TypeScript data files directly.
-- In production, the frontend calls `/api/archive-payload` on the same domain.
-- The backend container reads the archive data files and returns them as JSON.
-
-## GitHub workflow
-
-1. Make your changes locally.
-2. Run the frontend build:
+### 3) Frontend build
 
 ```bash
 cd web
 npm run build
 ```
 
-3. Commit and push:
+## How the data works
+
+In production, the browser does not import the big dataset files directly.
+
+- The frontend loads the archive payload from `/api/archive-payload`.
+- The backend container reads the TypeScript data files and returns JSON.
+- The frontend still uses direct imports in local development so you can work without starting the backend.
+
+## GitHub Workflow
+
+Use this exact flow after making code changes locally:
 
 ```bash
+cd /Users/luccapfruender/Desktop/deceptionArchive
+cd web
+npm run build
+cd ..
 git add .
 git commit -m "Describe your change"
 git push
 ```
 
-## Deploy to Hetzner
+If you only changed backend code, still run the frontend build once because the repo contains shared data modules.
 
-### Frontend deploy
+## Hetzner Deploy Flow
+
+### Step 1: Pull the pushed commit on the server
 
 ```bash
-cd web
-npm run deploy
+ssh root@157.90.127.76
+cd /var/www/deceptionArchive
+git pull
 ```
 
-That command builds the frontend and copies `web/dist/` to `/var/www/archive` on the server.
-
-### Backend deploy
-
-On the server:
+### Step 2: Rebuild and restart the backend container
 
 ```bash
 cd /var/www/deceptionArchive/backend
 docker compose up -d --build
 ```
 
-If you deploy from a fresh pull, rebuild the backend image after pulling the repo update.
+### Step 3: Rebuild and upload the frontend
 
-### Nginx switch to the archive
+From your local machine:
 
-The live site should point `lpstudies.net` to `/var/www/archive` and proxy `/api` to the backend container on `127.0.0.1:3000`.
+```bash
+cd /Users/luccapfruender/Desktop/deceptionArchive/web
+npm run deploy
+```
 
-After changing nginx:
+That command builds `web/dist/` and rsyncs it to `/var/www/archive` on the server.
+
+### Step 4: Reload nginx
+
+On the server:
 
 ```bash
 nginx -t
 systemctl reload nginx
 ```
 
-### SSL renewal
-
-If the certificate expires, renew it on the server before testing HTTPS:
+### Step 5: Verify the live site
 
 ```bash
-certbot certonly --nginx -d lpstudies.net -d www.lpstudies.net
+curl -I https://lpstudies.net/
+curl -s https://lpstudies.net/api/health
+curl -s https://lpstudies.net/api/archive-payload | head
 ```
 
-Then reload nginx:
+## Nginx Layout
+
+The live server should point like this:
+
+- Document root: `/var/www/archive`
+- Backend proxy: `/api/` -> `http://127.0.0.1:3000`
+- Old study kept untouched at `/var/www/study`
+
+If you need to inspect the active config:
 
 ```bash
+ssh root@157.90.127.76
+sed -n '1,120p' /etc/nginx/sites-enabled/study
+```
+
+## SSL Renewal
+
+If `curl` or the browser says the certificate expired, renew it on the server:
+
+```bash
+ssh root@157.90.127.76
+certbot certonly --standalone -d lpstudies.net -d www.lpstudies.net
 systemctl reload nginx
 ```
 
-## Rollback to the old study
-
-The old study stays on the server in `/var/www/study`.
-
-To roll back:
-
-1. Change the nginx document root back to `/var/www/study`.
-2. Reload nginx.
-3. Stop the archive backend container if you want it fully offline.
-
-Example backend stop:
+Then verify:
 
 ```bash
+curl -I https://lpstudies.net/
+```
+
+## Rollback to the Old Study
+
+Rollback is fast because the old project stays on the server.
+
+### To roll back
+
+1. Change nginx root back to `/var/www/study`.
+2. Reload nginx.
+3. Stop the archive backend if you want it fully offline.
+
+Example stop command:
+
+```bash
+ssh root@157.90.127.76
 cd /var/www/deceptionArchive/backend
 docker compose down
 ```
 
-## Verification
+### To switch back to the archive later
 
-After deploy, verify:
+1. Set nginx root to `/var/www/archive`.
+2. Make sure `/api/` still proxies to `127.0.0.1:3000`.
+3. Start the backend container again.
+4. Reload nginx.
 
-```bash
-curl -I https://lpstudies.net
-curl -s https://lpstudies.net/health
-curl -s https://lpstudies.net/api/archive-payload | head
-```
+## Files to Know
 
-## Notes
+- [README.md](README.md) - this runbook
+- [web/package.json](web/package.json) - frontend build and deploy scripts
+- [web/src/data/archiveClient.tsx](web/src/data/archiveClient.tsx) - frontend data loader
+- [backend/server.ts](backend/server.ts) - archive JSON API
+- [backend/docker-compose.yml](backend/docker-compose.yml) - backend container runner
+- [backend/Dockerfile](backend/Dockerfile) - backend image build
 
-- The archive frontend is intended to live at the domain root now.
-- The old study code stays on the server for rollback.
-- The backend container is only for the archive payload API.
+## Operational Notes
+
+- Push to GitHub first, then `git pull` on the server.
+- Do not delete `/var/www/study`; it is the rollback path.
+- The backend container is only for serving archive data.
+- The frontend deploy is just a static file upload of `web/dist`.
