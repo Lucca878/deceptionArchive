@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deception-archive.org/specs/dataset.schema.json",
+  "title": "Deception Archive Dataset Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "description",
+    "yearRange",
+    "tags",
+    "metadata"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20
+    },
+    "yearRange": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{4}$"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 2
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "statementCount",
+        "groundTruth",
+        "topic",
+        "sourceAndResearchDesign"
+      ],
+      "properties": {
+        "language": {
+          "type": "string",
+          "minLength": 2
+        },
+        "statementCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "groundTruth": {
+          "type": "string",
+          "enum": [
+            "Expert annotation",
+            "Fact-checking organizations",
+            "Court-verified outcomes",
+            "Author admission",
+            "Mixed procedure"
+          ]
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 2
+        },
+        "experimentalDesign": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceAndResearchDesign": {
+          "type": "string",
+          "minLength": 1
+        },
+        "withinOrBetweenDesign": {
+          "type": "string",
+          "minLength": 2
+        },
+        "reuse": {
+          "type": "string",
+          "enum": [
+            "Yes",
+            "No",
+            "Unknown"
+          ]
+        },
+        "openSource": {
+          "type": "string",
+          "enum": [
+            "Yes",
+            "No",
+            "Unknown"
+          ]
+        },
+        "documentedInAcademicOutlet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "truthfulDeceptiveProportion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "type": "string",
+          "minLength": 1
+        },
+        "typeOfDeception": {
+          "type": "string",
+          "minLength": 1
+        },
+        "datasetAvailable": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

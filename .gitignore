@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Vite
+web/dist/
+web/.vite/
+
+# Large raw dataset files (too big for GitHub)
+web/src/data/LOL/
