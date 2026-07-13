@@ -69,6 +69,8 @@ interface ArchivePayload {
 }
 
 let payload: ArchivePayload | null = null
+let payloadInitError: string | null = null
+let payloadInitInProgress = false
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const webDataRoot = path.join(projectRoot, 'web', 'src', 'data')
@@ -207,6 +209,23 @@ async function initializePayload() {
   }
 }
 
+async function ensurePayloadInitialized() {
+  if (payload || payloadInitInProgress) return
+
+  payloadInitInProgress = true
+  try {
+    await initializePayload()
+    payloadInitError = null
+    console.log('Archive payload initialized')
+  } catch (error) {
+    payload = null
+    payloadInitError = error instanceof Error ? error.message : String(error)
+    console.error('Failed to initialize archive payload:', error)
+  } finally {
+    payloadInitInProgress = false
+  }
+}
+
 function getCsvFilePath(datasetId: string): string | null {
   const sourcePath = payload?.csvPreviewsByDatasetId[datasetId]?.sourcePath
   if (!sourcePath) return null
@@ -234,17 +253,28 @@ const server = createServer((request, response) => {
     return
   }
 
-  if (!payload) {
-    json(response, 503, { error: 'Archive payload is initializing' })
-    return
-  }
+  if (url.pathname === '/health' || url.pathname === '/api/health') {
+    if (!payload) {
+      json(response, 503, {
+        ok: false,
+        status: payloadInitInProgress ? 'initializing' : 'not-ready',
+        error: payloadInitError ?? 'Archive payload is initializing',
+      })
+      return
+    }
 
-  if (url.pathname === '/health') {
     json(response, 200, {
       ok: true,
       datasets: payload.datasets.length,
       terms: payload.terms.length,
       csvPreviews: Object.keys(payload.csvPreviewsByDatasetId).length,
+    })
+    return
+  }
+
+  if (!payload) {
+    json(response, 503, {
+      error: payloadInitError ?? 'Archive payload is initializing',
     })
     return
   }
@@ -349,13 +379,14 @@ const server = createServer((request, response) => {
 
 const port = Number(process.env.PORT ?? 3000)
 
-initializePayload()
-  .then(() => {
-    server.listen(port, '0.0.0.0', () => {
-      console.log(`Archive backend listening on ${port}`)
-    })
-  })
-  .catch((error) => {
-    console.error('Failed to initialize archive payload:', error)
-    process.exit(1)
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Archive backend listening on ${port}`)
+  void ensurePayloadInitialized()
+
+  // Keep retrying in case required data files arrive after container start.
+  setInterval(() => {
+    if (!payload) {
+      void ensurePayloadInitialized()
+    }
+  }, 30_000)
   })
