@@ -3,6 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useArchiveData } from '../data/archiveClient'
 import type { DatasetRecord } from '../types/dataset'
 
+function formatProportion(value: string) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return value
+  return n.toFixed(2)
+}
+
 const FIELDS: { label: string; key: string }[] = [
   { label: 'Year Range', key: 'yearRange' },
   { label: 'Language', key: 'language' },
@@ -10,43 +16,31 @@ const FIELDS: { label: string; key: string }[] = [
   { label: 'Ground Truth', key: 'groundTruth' },
   { label: 'Topic', key: 'topic' },
   { label: 'Type of Deception', key: 'typeOfDeception' },
+  { label: 'Truthful/Deceptive Proportion', key: 'truthfulDeceptiveProportion' },
   { label: 'Source & Research Design', key: 'sourceAndResearchDesign' },
   { label: 'Within/Between Design', key: 'withinOrBetweenDesign' },
   { label: 'Format', key: 'format' },
   { label: 'Open-source', key: 'openSource' },
+  { label: 'Reuse', key: 'reuse' },
+  { label: 'Dataset Available', key: 'datasetAvailable' },
+  { label: 'Documented in Academic Outlet', key: 'documentedInAcademicOutlet' },
 ]
-
-const PREVIEW_ROWS = 20
-
-const escapeCsv = (v: string) =>
-  v.includes(',') || v.includes('"') || v.includes('\n')
-    ? `"${v.replace(/"/g, '""')}"`
-    : v
-
-function downloadCsvFile(filename: string, headers: string[], rows: string[][]) {
-  const lines = [
-    headers.map(escapeCsv).join(','),
-    ...rows.map((row) => row.map(escapeCsv).join(',')),
-  ]
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 export function BulkInspectPage() {
   const [params] = useSearchParams()
   const { data } = useArchiveData()
+  const apiBaseUrl = import.meta.env.DEV
+    ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
+    : ''
   const ids = (params.get('ids') ?? '').split(',').filter(Boolean)
   const datasets = ids
     .map((id) => data?.datasets.find((d) => d.id === id))
     .filter(Boolean) as DatasetRecord[]
 
-  const [showAllCsv, setShowAllCsv] = useState(false)
   const csvPreviewsByDatasetId = data?.csvPreviewsByDatasetId ?? {}
+  const INITIAL_ROWS = 10
+  const TABLE_CAP = 250
+  const [expandedCsv, setExpandedCsv] = useState(false)
 
   // Build the combined CSV rows in memory for display and download
   const allHeaders = Array.from(
@@ -67,20 +61,23 @@ export function BulkInspectPage() {
     }
   }
 
-  const visibleCsvRows = showAllCsv ? allCsvRows : allCsvRows.slice(0, PREVIEW_ROWS)
-
   const bulkDownload = () => {
-    downloadCsvFile(
-      `lol-bulk-${datasets.map((d) => d.id).join('_').slice(0, 60)}.csv`,
-      csvHeaders,
-      allCsvRows,
-    )
+    const idsParam = datasets.map((d) => d.id).join(',')
+    const url = `${apiBaseUrl}/api/download-bulk-csv?ids=${encodeURIComponent(idsParam)}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `lol-bulk-${datasets.map((d) => d.id).join('_').slice(0, 60)}.csv`
+    a.click()
   }
 
   const downloadSingleDataset = (datasetId: string) => {
     const preview = csvPreviewsByDatasetId[datasetId]
     if (!preview) return
-    downloadCsvFile(`lol-${datasetId}.csv`, preview.headers, preview.fullRows)
+    const url = `${apiBaseUrl}/api/download-dataset-csv/${encodeURIComponent(datasetId)}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `lol-${datasetId}.csv`
+    a.click()
   }
 
   if (!datasets.length) {
@@ -158,9 +155,14 @@ export function BulkInspectPage() {
               <tr key={key}>
                 <td className="bulk-table-field-col">{label}</td>
                 {datasets.map((d) => {
-                  const val = key === 'yearRange'
+                  let val = key === 'yearRange'
                     ? d.yearRange
                     : (d.metadata as unknown as Record<string, unknown>)[key]
+
+                  if (key === 'truthfulDeceptiveProportion' && typeof val === 'string') {
+                    val = formatProportion(val)
+                  }
+
                   return (
                     <td key={d.id}>
                       {val != null && val !== ''
@@ -178,17 +180,16 @@ export function BulkInspectPage() {
       <div className="csv-preview-block">
         <div className="csv-preview-header-row">
           <h3>Combined CSV preview</h3>
-          {allCsvRows.length > PREVIEW_ROWS && (
-            <button type="button" className="csv-toggle-btn" onClick={() => setShowAllCsv((v) => !v)}>
-              {showAllCsv
-                ? `Show first ${PREVIEW_ROWS} rows`
-                : `Show all ${allCsvRows.length.toLocaleString()} rows`}
+          {allCsvRows.length > INITIAL_ROWS && (
+            <button type="button" className="csv-toggle-btn" onClick={() => setExpandedCsv((v) => !v)}>
+              {expandedCsv ? `Show first ${INITIAL_ROWS} rows` : `Preview up to ${TABLE_CAP} rows`}
             </button>
           )}
         </div>
         <p className="csv-preview-caption">
-          Showing {visibleCsvRows.length.toLocaleString()} of {allCsvRows.length.toLocaleString()} total rows
-          across {datasets.length} dataset{datasets.length !== 1 ? 's' : ''}
+          Showing {(expandedCsv ? Math.min(allCsvRows.length, TABLE_CAP) : Math.min(allCsvRows.length, INITIAL_ROWS)).toLocaleString()} of {allCsvRows.length.toLocaleString()} rows
+          {' across '}{datasets.length} dataset{datasets.length !== 1 ? 's' : ''}
+          {' · preview capped at '}{TABLE_CAP}; download contains all rows
         </p>
         <div className="csv-preview-table-wrap">
           <table className="csv-preview-table">
@@ -198,7 +199,7 @@ export function BulkInspectPage() {
               </tr>
             </thead>
             <tbody>
-              {visibleCsvRows.map((row, i) => (
+              {(expandedCsv ? allCsvRows.slice(0, TABLE_CAP) : allCsvRows.slice(0, INITIAL_ROWS)).map((row, i) => (
                 <tr key={i}>
                   {row.map((cell, j) => (
                     <td key={j}>{cell || '-'}</td>

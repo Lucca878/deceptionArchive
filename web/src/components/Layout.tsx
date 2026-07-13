@@ -7,13 +7,11 @@ export function Layout() {
         <header className="window-title-bar">
           <div className="window-title-left">
             <span className="window-app-dot" aria-hidden="true" />
-            <p className="window-title">Library of Lies.exe</p>
+            <Link to="/" className="window-title-link" aria-label="Go to homepage">
+              <p className="window-title">Library of Lies</p>
+            </Link>
           </div>
-          <div className="window-actions" aria-hidden="true">
-            <span className="window-action">_</span>
-            <span className="window-action">[]</span>
-            <span className="window-action">X</span>
-          </div>
+          <p className="window-title-note">Deception Data Archive</p>
         </header>
 
         <div className="window-menu-bar" aria-label="Application menu">
@@ -26,12 +24,12 @@ export function Layout() {
             Datasets
           </NavLink>
           <NavLink
-            to="/terms"
+            to="/glossary"
             className={({ isActive }) =>
               isActive ? 'menu-link menu-link-active' : 'menu-link'
             }
           >
-            Terms
+            Glossary
           </NavLink>
           <NavLink
             to="/about"
@@ -44,13 +42,6 @@ export function Layout() {
         </div>
 
         <div className="window-body">
-          <header className="top-bar">
-            <Link to="/" className="brand-home-link" aria-label="Go to homepage">
-              <p className="eyebrow">Deception Data Archive</p>
-              <h1 className="brand">Library of Lies</h1>
-            </Link>
-            <p className="toolbar-label">Dataset Explorer</p>
-          </header>
           <main className="page-content">
             <Outlet />
           </main>
@@ -58,7 +49,6 @@ export function Layout() {
 
         <footer className="window-status-bar" aria-label="Status bar">
           <span>Connected: archive.local</span>
-          <span>Rendering mode: CRT</span>
         </footer>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useArchiveData } from '../data/archiveClient'
 
-export function TermsPage() {
+export function GlossaryPage() {
   const { data } = useArchiveData()
 
   if (!data) {
@@ -16,7 +16,7 @@ export function TermsPage() {
 
   return (
     <section className="panel">
-      <h2>Terms</h2>
+      <h2>Glossary</h2>
       <p>Commonly agreed-upon definitions for shared interpretation.</p>
       <div className="terms-grid">
         {terms.map((entry) => (

@@ -49,7 +49,7 @@ export function DatasetCard({ dataset, selected = false, onToggleSelect }: Datas
           aria-label={selected ? `Deselect ${dataset.name}` : `Select ${dataset.name}`}
           onClick={(e) => { e.stopPropagation(); onToggleSelect(dataset.id) }}
         >
-          {selected ? '✔' : '□'}
+          <span className="card-select-indicator" aria-hidden="true">{selected ? '✓' : ''}</span>
         </button>
       )}
       <Link

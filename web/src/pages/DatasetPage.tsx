@@ -2,20 +2,33 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useArchiveData } from '../data/archiveClient'
 
+function formatProportion(value: string) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return value
+  return n.toFixed(2)
+}
+
 export function DatasetPage() {
   const { datasetId } = useParams()
   const { data } = useArchiveData()
-  const [showAll, setShowAll] = useState(false)
+  const apiBaseUrl = import.meta.env.DEV
+    ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
+    : ''
   const dataset = data?.datasets.find((item) => item.id === datasetId)
   const sourceAndResearchDesign =
     dataset?.metadata.sourceAndResearchDesign ??
     dataset?.metadata.experimentalDesign ??
     'Not specified'
   const csvPreview = dataset ? data?.csvPreviewsByDatasetId[dataset.id] : undefined
+  const totalRows = dataset?.metadata.statementCount ?? 0
+  const availableRows = csvPreview?.fullRows.length ?? 0
+  const INITIAL_ROWS = 10
+  const TABLE_CAP = 250
+  const [expanded, setExpanded] = useState(false)
   const visibleRows = csvPreview
-    ? showAll
-      ? csvPreview.fullRows
-      : csvPreview.previewRows
+    ? expanded
+      ? csvPreview.fullRows.slice(0, TABLE_CAP)
+      : csvPreview.fullRows.slice(0, INITIAL_ROWS)
     : []
 
   if (!data) {
@@ -29,21 +42,11 @@ export function DatasetPage() {
 
   const downloadCsv = () => {
     if (!csvPreview || !dataset) return
-    const escape = (v: string) =>
-      v.includes(',') || v.includes('"') || v.includes('\n')
-        ? `"${v.replace(/"/g, '""')}"`
-        : v
-    const lines = [
-      csvPreview.headers.map(escape).join(','),
-      ...csvPreview.fullRows.map((row) => row.map(escape).join(',')),
-    ]
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
+    const url = `${apiBaseUrl}/api/download-dataset-csv/${encodeURIComponent(dataset.id)}`
     const a = document.createElement('a')
     a.href = url
     a.download = `${dataset.id}.csv`
     a.click()
-    URL.revokeObjectURL(url)
   }
 
   if (!dataset) {
@@ -72,6 +75,32 @@ export function DatasetPage() {
             <li>Ground truth: {dataset.metadata.groundTruth}</li>
             <li>Topic: {dataset.metadata.topic}</li>
             <li>Source and research design: {sourceAndResearchDesign}</li>
+            {dataset.metadata.typeOfDeception ? (
+              <li>Type of deception: {dataset.metadata.typeOfDeception}</li>
+            ) : null}
+            {dataset.metadata.truthfulDeceptiveProportion ? (
+              <li>
+                Truthful/deceptive proportion: {formatProportion(dataset.metadata.truthfulDeceptiveProportion)}
+              </li>
+            ) : null}
+            {dataset.metadata.withinOrBetweenDesign ? (
+              <li>Within/Between design: {dataset.metadata.withinOrBetweenDesign}</li>
+            ) : null}
+            {dataset.metadata.format ? (
+              <li>Format: {dataset.metadata.format}</li>
+            ) : null}
+            {dataset.metadata.openSource ? (
+              <li>Open-source: {dataset.metadata.openSource}</li>
+            ) : null}
+            {dataset.metadata.reuse ? (
+              <li>Reuse: {dataset.metadata.reuse}</li>
+            ) : null}
+            {dataset.metadata.datasetAvailable ? (
+              <li>Dataset available: {dataset.metadata.datasetAvailable}</li>
+            ) : null}
+            {dataset.metadata.documentedInAcademicOutlet ? (
+              <li>Documented in academic outlet: {dataset.metadata.documentedInAcademicOutlet}</li>
+            ) : null}
             <li>Coverage: {dataset.yearRange}</li>
             <li>
               Original source:{' '}
@@ -97,27 +126,30 @@ export function DatasetPage() {
           <h3>CSV Preview</h3>
           {csvPreview && (
             <button type="button" className="csv-toggle-btn" onClick={downloadCsv}>
-              Download CSV ({csvPreview.fullRows.length.toLocaleString()} rows)
+              Download CSV ({totalRows.toLocaleString()} rows)
             </button>
           )}
-          {csvPreview && csvPreview.fullRows.length > csvPreview.previewRows.length && (
+          {csvPreview && availableRows > INITIAL_ROWS && (
             <button
               type="button"
               className="csv-toggle-btn"
-              onClick={() => setShowAll((v) => !v)}
+              onClick={() => setExpanded((v) => !v)}
             >
-              {showAll
-                ? `Show first ${csvPreview.previewRows.length} rows`
-                : `Show all ${csvPreview.fullRows.length} rows`}
+              {expanded
+                ? `Show first ${INITIAL_ROWS} rows`
+                : `Preview up to ${TABLE_CAP} rows`}
             </button>
           )}
         </div>
         {csvPreview ? (
           <>
             <p className="csv-preview-caption">
-              Showing {visibleRows.length.toLocaleString()} of{' '}
-              {dataset.metadata.statementCount.toLocaleString()} total rows
-              {' · '}{csvPreview.sourcePath}
+              Showing {visibleRows.length.toLocaleString()} of {totalRows.toLocaleString()} rows
+              {expanded && availableRows < totalRows
+                ? ` (preview capped at ${TABLE_CAP}; download contains all ${totalRows.toLocaleString()})`
+                : expanded
+                  ? ` (preview capped at ${TABLE_CAP}; download contains all ${totalRows.toLocaleString()})`
+                  : ` · download contains all rows`}
             </p>
             <div className="csv-preview-table-wrap" role="region" aria-label="CSV preview table">
               <table className="csv-preview-table">

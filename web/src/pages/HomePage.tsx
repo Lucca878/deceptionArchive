@@ -9,11 +9,16 @@ export function HomePage() {
   const [query, setQuery] = useState('')
   const [languages_sel, setLanguagesSel] = useState<string[]>([])
   const [deceptionTypes_sel, setDeceptionTypesSel] = useState<string[]>([])
+  const [groundTruth_sel, setGroundTruthSel] = useState<string[]>([])
+  const [topics_sel, setTopicsSel] = useState<string[]>([])
+  const [sourceDesign_sel, setSourceDesignSel] = useState<string[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const navigate = useNavigate()
   const { data } = useArchiveData()
   const datasets = data?.datasets ?? []
-  const csvPreviewsByDatasetId = data?.csvPreviewsByDatasetId ?? {}
+  const apiBaseUrl = import.meta.env.DEV
+    ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
+    : ''
 
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => {
@@ -35,34 +40,12 @@ export function HomePage() {
   const bulkDownload = () => {
     const selected = datasets.filter((d) => selectedIds.has(d.id))
     if (!selected.length) return
-    // Collect all unique headers across selected datasets, prepend dataset_id
-    const allHeaders = Array.from(
-      new Set(selected.flatMap((d) => csvPreviewsByDatasetId[d.id]?.headers ?? []))
-    )
-    const headers = ['dataset_id', ...allHeaders]
-    const escape = (v: string) =>
-      v.includes(',') || v.includes('"') || v.includes('\n')
-        ? `"${v.replace(/"/g, '""')}"`
-        : v
-    const lines = [headers.map(escape).join(',')]
-    for (const d of selected) {
-      const preview = csvPreviewsByDatasetId[d.id]
-      if (!preview) continue
-      for (const row of preview.fullRows) {
-        const mapped = allHeaders.map((h) => {
-          const idx = preview.headers.indexOf(h)
-          return idx >= 0 ? row[idx] ?? '' : ''
-        })
-        lines.push([d.id, ...mapped].map(escape).join(','))
-      }
-    }
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
+    const ids = selected.map((d) => d.id).join(',')
+    const url = `${apiBaseUrl}/api/download-bulk-csv?ids=${encodeURIComponent(ids)}`
     const a = document.createElement('a')
     a.href = url
     a.download = `lol-bulk-${selected.map((d) => d.id).join('_').slice(0, 60)}.csv`
     a.click()
-    URL.revokeObjectURL(url)
   }
 
   // Normalize a string to lowercase-trimmed for case-insensitive comparison
@@ -92,10 +75,46 @@ export function HomePage() {
       .map(([, display]) => display)
   }, [datasets])
 
+  const groundTruthOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const d of datasets) {
+      const v = d.metadata.groundTruth?.trim()
+      if (v) seen.set(norm(v), toTitleCase(v))
+    }
+    return Array.from(seen.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, display]) => display)
+  }, [datasets])
+
+  const topicOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const d of datasets) {
+      const v = d.metadata.topic?.trim()
+      if (v) seen.set(norm(v), toTitleCase(v))
+    }
+    return Array.from(seen.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, display]) => display)
+  }, [datasets])
+
+  const sourceDesignOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const d of datasets) {
+      const v = (d.metadata.sourceAndResearchDesign ?? d.metadata.experimentalDesign ?? '').trim()
+      if (v) seen.set(norm(v), toTitleCase(v))
+    }
+    return Array.from(seen.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, display]) => display)
+  }, [datasets])
+
   const filtered = useMemo(() => {
     const q = norm(query)
     const langNorms = languages_sel.map(norm)
     const typeNorms = deceptionTypes_sel.map(norm)
+    const groundTruthNorms = groundTruth_sel.map(norm)
+    const topicNorms = topics_sel.map(norm)
+    const sourceDesignNorms = sourceDesign_sel.map(norm)
     return datasets.filter((d) => {
       if (
         q &&
@@ -112,11 +131,33 @@ export function HomePage() {
           .map((s) => norm(s))
         if (!typeNorms.some((tn) => datasetTypes.includes(tn))) return false
       }
+      if (groundTruthNorms.length > 0 && !groundTruthNorms.includes(norm(d.metadata.groundTruth ?? '')))
+        return false
+      if (topicNorms.length > 0 && !topicNorms.includes(norm(d.metadata.topic ?? '')))
+        return false
+      if (sourceDesignNorms.length > 0) {
+        const sourceDesign = norm(d.metadata.sourceAndResearchDesign ?? d.metadata.experimentalDesign ?? '')
+        if (!sourceDesignNorms.includes(sourceDesign)) return false
+      }
       return true
     })
-  }, [datasets, query, languages_sel, deceptionTypes_sel])
+  }, [
+    datasets,
+    query,
+    languages_sel,
+    deceptionTypes_sel,
+    groundTruth_sel,
+    topics_sel,
+    sourceDesign_sel,
+  ])
 
-  const hasFilters = query || languages_sel.length > 0 || deceptionTypes_sel.length > 0
+  const hasFilters =
+    query ||
+    languages_sel.length > 0 ||
+    deceptionTypes_sel.length > 0 ||
+    groundTruth_sel.length > 0 ||
+    topics_sel.length > 0 ||
+    sourceDesign_sel.length > 0
   const allVisibleSelected = filtered.length > 0 && filtered.every((d) => selectedIds.has(d.id))
 
   if (!data) {
@@ -132,7 +173,7 @@ export function HomePage() {
     <>
       <section className="hero-block">
         <div>
-          <p className="eyebrow">Upload Wizard</p>
+          <p className="eyebrow">Share Dataset</p>
           <h2>You have a deception dataset you would like to share?</h2>
           <p className="hero-subtitle">
             Contribute standardized deception datasets here!
@@ -169,11 +210,39 @@ export function HomePage() {
           selected={deceptionTypes_sel}
           onChange={setDeceptionTypesSel}
         />
+        <MultiDropdown
+          id="filter-ground-truth"
+          label="Ground Truth"
+          options={groundTruthOptions}
+          selected={groundTruth_sel}
+          onChange={setGroundTruthSel}
+        />
+        <MultiDropdown
+          id="filter-topic"
+          label="Topic"
+          options={topicOptions}
+          selected={topics_sel}
+          onChange={setTopicsSel}
+        />
+        <MultiDropdown
+          id="filter-source-design"
+          label="Source & Research Design"
+          options={sourceDesignOptions}
+          selected={sourceDesign_sel}
+          onChange={setSourceDesignSel}
+        />
         {hasFilters && (
           <button
             type="button"
             className="filter-clear"
-            onClick={() => { setQuery(''); setLanguagesSel([]); setDeceptionTypesSel([]) }}
+            onClick={() => {
+              setQuery('')
+              setLanguagesSel([])
+              setDeceptionTypesSel([])
+              setGroundTruthSel([])
+              setTopicsSel([])
+              setSourceDesignSel([])
+            }}
           >
             Clear
           </button>

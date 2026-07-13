@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { DatasetRecord, TermEntry } from '../types/dataset'
-import type { CsvPreview } from './csvPreviews'
+
+interface CsvPreview {
+  headers: string[]
+  fullRows: string[][]
+}
 
 export interface ArchivePayload {
   datasets: DatasetRecord[]
@@ -17,29 +21,36 @@ interface ArchiveDataState {
 const ArchiveDataContext = createContext<ArchiveDataState | undefined>(undefined)
 
 async function loadArchivePayload(): Promise<ArchivePayload> {
-  if (import.meta.env.DEV) {
-    const [{ archiveData }, { csvPreviewsByDatasetId }] = await Promise.all([
-      import('./archiveData'),
-      import('./csvPreviews'),
-    ])
+  const apiBaseUrl = import.meta.env.DEV
+    ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
+    : ''
 
-    return {
-      ...archiveData,
-      csvPreviewsByDatasetId,
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/archive-payload`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    if (response.ok) {
+      return (await response.json()) as ArchivePayload
+    }
+
+    if (!import.meta.env.DEV) {
+      throw new Error(`Failed to load archive data (${response.status})`)
+    }
+  } catch {
+    if (!import.meta.env.DEV) {
+      throw new Error('Failed to load archive data')
     }
   }
 
-  const response = await fetch('/api/archive-payload', {
-    headers: {
-      Accept: 'application/json',
-    },
-  })
+  const [{ archiveData }] = await Promise.all([import('./archiveData')])
 
-  if (!response.ok) {
-    throw new Error(`Failed to load archive data (${response.status})`)
+  return {
+    ...archiveData,
+    csvPreviewsByDatasetId: {},
   }
-
-  return (await response.json()) as ArchivePayload
 }
 
 export function ArchiveDataProvider({ children }: { children: ReactNode }) {

@@ -6,6 +6,7 @@ export function ContributePage() {
   const [institution, setInstitution] = useState('')
   const [datasetName, setDatasetName] = useState('')
   const [datasetUrl, setDatasetUrl] = useState('')
+  const [publicationUrl, setPublicationUrl] = useState('')
   const [description, setDescription] = useState('')
   const [hasConsent, setHasConsent] = useState(false)
 
@@ -13,11 +14,16 @@ export function ContributePage() {
     event.preventDefault()
 
     const lines = [
+      'Dear Deception Archive Team,',
+      '',
+      'Below you can find the details of the deception dataset I want to share with you. I am looking forward to hearing back from you.',
+      '',
       `Name: ${name}`,
       `Email: ${email}`,
       `Institution: ${institution || 'N/A'}`,
       `Dataset: ${datasetName}`,
       `Dataset URL: ${datasetUrl || 'N/A'}`,
+      `Publication link: ${publicationUrl || 'N/A'}`,
       '',
       'Description:',
       description,
@@ -27,7 +33,7 @@ export function ContributePage() {
 
     const subject = encodeURIComponent(`Dataset contribution: ${datasetName}`)
     const body = encodeURIComponent(lines.join('\n'))
-    window.location.href = `mailto:info@deceptionarchive.com?subject=${subject}&body=${body}`
+    window.location.href = `mailto:l.j.pfruender@tilburguniversity.edu?subject=${subject}&body=${body}`
   }
 
   return (
@@ -36,7 +42,7 @@ export function ContributePage() {
       <h2>Contribute New Dataset</h2>
       <p>
         Share a deception dataset with the archive team. Fill in the details below
-        and submit to open your mail client with a pre-filled contribution draft.
+        and submit to send us an email with your pre-filled contribution draft. Following, we will review your submission and get back to you for further steps.
       </p>
 
       <form className="contribute-form" onSubmit={handleSubmit}>
@@ -60,7 +66,7 @@ export function ContributePage() {
           required
         />
 
-        <label className="filter-label" htmlFor="contrib-institution">Institution (optional)</label>
+        <label className="filter-label" htmlFor="contrib-institution">Institution</label>
         <input
           id="contrib-institution"
           className="filter-input"
@@ -79,13 +85,35 @@ export function ContributePage() {
           required
         />
 
-        <label className="filter-label" htmlFor="contrib-dataset-url">Dataset URL (optional)</label>
+        <div className="contribute-label-row">
+          <label className="filter-label" htmlFor="contrib-dataset-url">Dataset URL</label>
+          <span className="contribute-help" tabIndex={0} aria-label="Dataset URL help">
+            ?
+            <span className="contribute-help-box">i.e., link to OSF or GitHub repository</span>
+          </span>
+        </div>
         <input
           id="contrib-dataset-url"
           className="filter-input"
           type="url"
           value={datasetUrl}
           onChange={(e) => setDatasetUrl(e.target.value)}
+          placeholder="https://..."
+        />
+
+        <div className="contribute-label-row">
+          <label className="filter-label" htmlFor="contrib-publication-url">Link to publication</label>
+          <span className="contribute-help" tabIndex={0} aria-label="Publication link help">
+            ?
+            <span className="contribute-help-box">i.e., doi to published work or preprint</span>
+          </span>
+        </div>
+        <input
+          id="contrib-publication-url"
+          className="filter-input"
+          type="url"
+          value={publicationUrl}
+          onChange={(e) => setPublicationUrl(e.target.value)}
           placeholder="https://..."
         />
 

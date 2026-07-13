@@ -84,7 +84,7 @@ export const archiveData: { datasets: DatasetRecord[]; terms: TermEntry[] } = {
     ],
     "metadata": {
       "language": "English",
-      "statementCount": 1,
+      "statementCount": 501,
       "groundTruth": "Clear and verifiable",
       "topic": "Object description",
       "sourceAndResearchDesign": "Offline naturalistic",
@@ -116,7 +116,7 @@ export const archiveData: { datasets: DatasetRecord[]; terms: TermEntry[] } = {
     ],
     "metadata": {
       "language": "English",
-      "statementCount": 1,
+      "statementCount": 1492,
       "groundTruth": "Clear and verifiable",
       "topic": "Reviews",
       "sourceAndResearchDesign": "Offline naturalistic",

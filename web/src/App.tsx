@@ -5,7 +5,7 @@ import { BulkInspectPage } from './pages/BulkInspectPage'
 import { ContributePage } from './pages/ContributePage'
 import { DatasetPage } from './pages/DatasetPage'
 import { useArchiveData } from './data/archiveClient'
-import { TermsPage } from './pages/TermsPage'
+import { GlossaryPage } from './pages/GlossaryPage'
 import { HomePage } from './pages/HomePage'
 
 function App() {
@@ -53,7 +53,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/datasets/:datasetId" element={<DatasetPage />} />
         <Route path="/bulk-inspect" element={<BulkInspectPage />} />
-        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/glossary" element={<GlossaryPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contribute" element={<ContributePage />} />
       </Route>
