@@ -32,9 +32,16 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 16px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  font-size: 1.04rem;
   color: var(--text);
   background:
     radial-gradient(circle at 0% 0%, rgba(15, 139, 220, 0.18), transparent 36%),

@@ -47,6 +47,7 @@ export function BulkInspectPage() {
     new Set(datasets.flatMap((d) => csvPreviewsByDatasetId[d.id]?.headers ?? [])),
   )
   const csvHeaders = ['dataset_id', ...allHeaders]
+  const totalRows = datasets.reduce((sum, d) => sum + (d.metadata.statementCount ?? 0), 0)
 
   const allCsvRows: string[][] = []
   for (const d of datasets) {
@@ -69,6 +70,10 @@ export function BulkInspectPage() {
     a.download = `lol-bulk-${datasets.map((d) => d.id).join('_').slice(0, 60)}.csv`
     a.click()
   }
+
+  const visiblePreviewRows = expandedCsv
+    ? Math.min(allCsvRows.length, TABLE_CAP)
+    : Math.min(allCsvRows.length, INITIAL_ROWS)
 
   const downloadSingleDataset = (datasetId: string) => {
     const preview = csvPreviewsByDatasetId[datasetId]
@@ -107,9 +112,6 @@ export function BulkInspectPage() {
           <h2>Comparing {datasets.length} dataset{datasets.length !== 1 ? 's' : ''}</h2>
         </div>
         <div className="bulk-inspect-actions">
-          <button type="button" className="csv-toggle-btn" onClick={bulkDownload}>
-            Download combined CSV
-          </button>
           <Link to="/" className="csv-toggle-btn">
             Back to datasets
           </Link>
@@ -130,7 +132,9 @@ export function BulkInspectPage() {
                 disabled={!hasCsv}
                 title={hasCsv ? `Download ${d.name}` : `No CSV available for ${d.name}`}
               >
-                {hasCsv ? `Download ${d.name}` : `${d.name} (no CSV)`}
+                {hasCsv
+                  ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
+                  : `${d.name} (no CSV)`}
               </button>
             )
           })}
@@ -180,6 +184,11 @@ export function BulkInspectPage() {
       <div className="csv-preview-block">
         <div className="csv-preview-header-row">
           <h3>Combined CSV preview</h3>
+          <button type="button" className="csv-toggle-btn" onClick={bulkDownload}>
+            {datasets.length === 1
+              ? `Download CSV (${totalRows.toLocaleString()} rows)`
+              : `Download combined CSV (${totalRows.toLocaleString()} rows)`}
+          </button>
           {allCsvRows.length > INITIAL_ROWS && (
             <button type="button" className="csv-toggle-btn" onClick={() => setExpandedCsv((v) => !v)}>
               {expandedCsv ? `Show first ${INITIAL_ROWS} rows` : `Preview up to ${TABLE_CAP} rows`}
@@ -187,7 +196,7 @@ export function BulkInspectPage() {
           )}
         </div>
         <p className="csv-preview-caption">
-          Showing {(expandedCsv ? Math.min(allCsvRows.length, TABLE_CAP) : Math.min(allCsvRows.length, INITIAL_ROWS)).toLocaleString()} of {allCsvRows.length.toLocaleString()} rows
+          Showing {visiblePreviewRows.toLocaleString()} of {totalRows.toLocaleString()} rows
           {' across '}{datasets.length} dataset{datasets.length !== 1 ? 's' : ''}
           {' · preview capped at '}{TABLE_CAP}; download contains all rows
         </p>

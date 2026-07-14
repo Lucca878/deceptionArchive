@@ -53,6 +53,27 @@ In production, the browser does not import the big dataset files directly.
 - The backend container reads the TypeScript data files and returns JSON.
 - The frontend still uses direct imports in local development so you can work without starting the backend.
 
+### Production dataset storage
+
+Raw LOL CSV files are intentionally excluded from git (`web/src/data/LOL/` in `.gitignore`).
+
+- On the server, keep them in `/var/lib/deception-archive/LOL`.
+- The backend container mounts that directory read-only and reads files from `/data/LOL/Dataset_id`.
+- Because the dataset is outside the repo, `git pull` does not remove it.
+
+First-time setup on server (or after migrating servers):
+
+```bash
+mkdir -p /var/lib/deception-archive
+rsync -av --delete \
+	/Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/ \
+	root@157.90.127.76:/var/lib/deception-archive/LOL/
+```
+
+After this initial upload, normal `git push` / `git pull` deploys do not remove the CSV files because they live outside the git repository path.
+
+Only re-run the `rsync` command when the raw LOL CSV dataset changes.
+
 ## GitHub Workflow
 
 Use this exact flow after making code changes locally:
@@ -85,6 +106,8 @@ git pull
 cd /var/www/deceptionArchive/backend
 docker compose up -d --build
 ```
+
+The compose file mounts `/var/lib/deception-archive/LOL` into the container. If that folder is missing, API endpoints will return 503 with an initialization error until data is present.
 
 ### Step 3: Rebuild and upload the frontend
 
@@ -185,3 +208,4 @@ docker compose down
 - Do not delete `/var/www/study`; it is the rollback path.
 - The backend container is only for serving archive data.
 - The frontend deploy is just a static file upload of `web/dist`.
+- You only need to sync `/var/lib/deception-archive/LOL` when the raw CSV dataset itself changes.

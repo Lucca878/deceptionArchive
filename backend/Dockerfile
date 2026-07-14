@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY backend/package.json ./backend/package.json
 COPY backend/server.ts ./backend/server.ts
-COPY web/src/data ./web/src/data
+COPY web/src/data/archiveData.ts ./web/src/data/archiveData.ts
+COPY web/src/data/lolColumns.ts ./web/src/data/lolColumns.ts
 COPY web/src/types ./web/src/types
 
 WORKDIR /app/backend

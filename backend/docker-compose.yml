@@ -8,5 +8,8 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
+      LOL_DATASET_DIR: /data/LOL/Dataset_id
+    volumes:
+      - /var/lib/deception-archive/LOL:/data/LOL:ro
     ports:
       - "127.0.0.1:3000:3000"

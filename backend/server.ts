@@ -74,6 +74,10 @@ let payloadInitInProgress = false
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const webDataRoot = path.join(projectRoot, 'web', 'src', 'data')
+const defaultDatasetCsvRoot = path.join(webDataRoot, 'LOL', 'Dataset_id')
+const datasetCsvRoot = process.env.LOL_DATASET_DIR?.trim()
+  ? path.resolve(process.env.LOL_DATASET_DIR)
+  : defaultDatasetCsvRoot
 
 function json(response: import('node:http').ServerResponse, status: number, body: unknown) {
   response.writeHead(status, {
@@ -156,14 +160,14 @@ async function buildCsvPreviewsByDatasetId(): Promise<{
 }> {
   const entries = await Promise.all(
     Object.entries(DATASET_SOURCES).map(async ([datasetId, relPath]) => {
-      const absolutePath = path.join(webDataRoot, 'LOL', 'Dataset_id', relPath)
+      const absolutePath = path.join(datasetCsvRoot, relPath)
       const { headers, rows, totalRows } = await readCsvPreviewRows(absolutePath, PREVIEW_ROW_CAP)
 
       const preview: CsvPreview = {
         headers,
         previewRows: rows,
         fullRows: rows,
-        sourcePath: `LOL/Dataset_id/${relPath}`,
+        sourcePath: relPath,
       }
 
       return [datasetId, preview, totalRows] as const
@@ -216,7 +220,7 @@ async function ensurePayloadInitialized() {
   try {
     await initializePayload()
     payloadInitError = null
-    console.log('Archive payload initialized')
+    console.log(`Archive payload initialized (CSV root: ${datasetCsvRoot})`)
   } catch (error) {
     payload = null
     payloadInitError = error instanceof Error ? error.message : String(error)
@@ -227,13 +231,13 @@ async function ensurePayloadInitialized() {
 }
 
 function getCsvFilePath(datasetId: string): string | null {
-  const sourcePath = payload?.csvPreviewsByDatasetId[datasetId]?.sourcePath
+  const sourcePath = DATASET_SOURCES[datasetId]
   if (!sourcePath) return null
 
   const normalized = path.normalize(sourcePath)
   if (normalized.startsWith('..')) return null
 
-  return path.join(webDataRoot, normalized)
+  return path.join(datasetCsvRoot, normalized)
 }
 
 function sendCsv(response: import('node:http').ServerResponse, filename: string, content: string) {
