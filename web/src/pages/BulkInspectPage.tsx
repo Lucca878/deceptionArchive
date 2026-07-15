@@ -1,6 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useArchiveData } from '../data/archiveClient'
+import {
+  CITATION_STYLE_OPTIONS,
+  downloadCitationExport,
+  formatCitationPreviewText,
+  getCitationExportText,
+  type CitationStyleId,
+} from '../data/citationExports'
 import type { DatasetRecord } from '../types/dataset'
 
 function formatProportion(value: string) {
@@ -41,11 +48,18 @@ export function BulkInspectPage() {
   const INITIAL_ROWS = 10
   const TABLE_CAP = 250
   const [expandedCsv, setExpandedCsv] = useState(false)
+  const [citationStyle, setCitationStyle] = useState<CitationStyleId>('apa')
+  const [citationPreview, setCitationPreview] = useState('')
+  const [citationPreviewError, setCitationPreviewError] = useState('')
+  const [citationPreviewLoading, setCitationPreviewLoading] = useState(false)
+  const [copyStatus, setCopyStatus] = useState('')
+  const selectedDatasetIds = useMemo(() => datasets.map((dataset) => dataset.id), [datasets])
+  const selectedDatasetKey = selectedDatasetIds.join(',')
 
   // Build the combined CSV rows in memory for display and download
   const allHeaders = Array.from(
     new Set(datasets.flatMap((d) => csvPreviewsByDatasetId[d.id]?.headers ?? [])),
-  )
+  ).filter((header) => header !== 'dataset_id')
   const csvHeaders = ['dataset_id', ...allHeaders]
   const totalRows = datasets.reduce((sum, d) => sum + (d.metadata.statementCount ?? 0), 0)
 
@@ -85,6 +99,69 @@ export function BulkInspectPage() {
     a.click()
   }
 
+  const exportBulkCitations = () => {
+    if (!datasets.length) return
+    void downloadCitationExport(
+      apiBaseUrl,
+      selectedDatasetIds,
+      citationStyle,
+    ).catch((error: unknown) => {
+      window.alert(error instanceof Error ? error.message : 'Unable to export citations.')
+    })
+  }
+
+  const viewBulkCitations = () => {
+    if (!datasets.length) return
+
+    if (citationPreview || citationPreviewError) {
+      setCitationPreview('')
+      setCitationPreviewError('')
+      setCitationPreviewLoading(false)
+      setCopyStatus('')
+      return
+    }
+
+    setCitationPreviewLoading(true)
+    setCitationPreviewError('')
+    setCopyStatus('')
+
+    void getCitationExportText(
+      apiBaseUrl,
+      selectedDatasetIds,
+      citationStyle,
+    )
+      .then((text) => {
+        setCitationPreview(formatCitationPreviewText(citationStyle, text))
+      })
+      .catch((error: unknown) => {
+        setCitationPreview('')
+        setCitationPreviewError(error instanceof Error ? error.message : 'Unable to load citations.')
+      })
+      .finally(() => {
+        setCitationPreviewLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    setCitationPreview('')
+    setCitationPreviewError('')
+    setCitationPreviewLoading(false)
+    setCopyStatus('')
+  }, [selectedDatasetKey, citationStyle])
+
+  const copyBulkCitations = () => {
+    if (!citationPreview) return
+
+    void navigator.clipboard
+      .writeText(citationPreview)
+      .then(() => {
+        setCopyStatus('Copied')
+      })
+      .catch(() => {
+        setCopyStatus('Copy failed')
+      })
+  }
+
   if (!datasets.length) {
     if (!data) {
       return (
@@ -118,6 +195,64 @@ export function BulkInspectPage() {
         </div>
       </div>
 
+      <div className="citation-export-card" aria-label="Bulk citation export">
+        <div>
+          <h3>Export citations</h3>
+          <p className="citation-export-copy">
+            Download the unique source references for the selected datasets in one citation style.
+          </p>
+        </div>
+        <div className="citation-export-controls">
+          <label className="citation-export-label" htmlFor="bulk-citation-style">
+            Style
+          </label>
+          <select
+            id="bulk-citation-style"
+            className="citation-export-select"
+            value={citationStyle}
+            onChange={(event) => setCitationStyle(event.target.value as CitationStyleId)}
+          >
+            {CITATION_STYLE_OPTIONS.map((style) => (
+              <option key={style.id} value={style.id}>
+                {style.label}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="csv-toggle-btn" onClick={exportBulkCitations}>
+            Export {datasets.length === 1 ? 'citation' : 'citations'}
+          </button>
+          <button type="button" className="nav-link" onClick={viewBulkCitations}>
+            {citationPreviewLoading
+              ? 'Loading…'
+              : citationPreview || citationPreviewError
+                ? `Unview ${datasets.length === 1 ? 'citation' : 'citations'}`
+                : `View ${datasets.length === 1 ? 'citation' : 'citations'}`}
+          </button>
+        </div>
+        {citationPreview || citationPreviewError ? (
+          <div className="citation-preview-block" aria-live="polite">
+            {citationPreviewError ? (
+              <p className="citation-preview-error">{citationPreviewError}</p>
+            ) : (
+              <>
+                <textarea
+                  className="citation-preview-text"
+                  value={citationPreview}
+                  readOnly
+                  rows={10}
+                />
+                <div className="citation-preview-actions">
+                  <button type="button" className="csv-toggle-btn" onClick={copyBulkCitations}>
+                    Copy {datasets.length === 1 ? 'citation' : 'citations'}
+                  </button>
+                  {copyStatus ? <span className="citation-preview-status">{copyStatus}</span> : null}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div className="bulk-separate-downloads" aria-label="Download selected CSV files separately">
         <p className="bulk-separate-downloads-title">Download selected CSVs separately</p>
         <div className="bulk-separate-downloads-list">
@@ -141,7 +276,7 @@ export function BulkInspectPage() {
         </div>
       </div>
 
-      <h3>Metadata comparison</h3>
+      <h3>Metadata</h3>
       <div className="bulk-table-wrap">
         <table className="bulk-table">
           <thead>
@@ -204,7 +339,7 @@ export function BulkInspectPage() {
           <table className="csv-preview-table">
             <thead>
               <tr>
-                {csvHeaders.map((h) => <th key={h}>{h}</th>)}
+                {csvHeaders.map((h, index) => <th key={`${h}-${index}`}>{h}</th>)}
               </tr>
             </thead>
             <tbody>

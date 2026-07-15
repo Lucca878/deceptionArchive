@@ -15,14 +15,19 @@ export function GlossaryPage() {
   const { terms } = data
 
   return (
-    <section className="panel">
-      <h2>Glossary</h2>
-      <p>Commonly agreed-upon definitions for shared interpretation.</p>
-      <div className="terms-grid">
+    <section className="panel about-page">
+      <header className="about-hero">
+        <h2>Glossary</h2>
+      </header>
+      <p className="about-lead">Commonly agreed-upon definitions for shared interpretation.</p>
+      <div className="about-sections">
         {terms.map((entry) => (
-          <article key={entry.term} className="term-item">
-            <h3>{entry.term}</h3>
-            <p>{entry.definition}</p>
+          <article key={entry.term} className="about-section">
+            <p>
+              <strong>{entry.term}</strong>
+              <br />
+              {entry.definition}
+            </p>
           </article>
         ))}
       </div>

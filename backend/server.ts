@@ -9,6 +9,7 @@ import { parse } from 'csv-parse/sync'
 import { parse as createCsvParser } from 'csv-parse'
 import { stringify } from 'csv-stringify/sync'
 import { archiveData } from '../web/src/data/archiveData'
+import { EXPLICIT_CITATION_CATALOG } from './citationCatalogData.ts'
 
 const PREVIEW_ROW_CAP = 250
 
@@ -66,6 +67,129 @@ interface ArchivePayload {
   datasets: typeof archiveData.datasets
   terms: typeof archiveData.terms
   csvPreviewsByDatasetId: Record<string, CsvPreview>
+}
+
+const CITATION_STYLES = [
+  {
+    id: 'apa',
+    downloadExtension: 'txt',
+    contentType: 'text/plain; charset=utf-8',
+  },
+  {
+    id: 'bibtex',
+    downloadExtension: 'bib',
+    contentType: 'text/x-bibtex; charset=utf-8',
+  },
+  {
+    id: 'biblatex',
+    downloadExtension: 'bib',
+    contentType: 'text/x-bibtex; charset=utf-8',
+  },
+  {
+    id: 'chicago-mla',
+    downloadExtension: 'txt',
+    contentType: 'text/plain; charset=utf-8',
+  },
+  {
+    id: 'endnote-xml',
+    downloadExtension: 'xml',
+    contentType: 'application/xml; charset=utf-8',
+  },
+  {
+    id: 'harvard',
+    downloadExtension: 'txt',
+    contentType: 'text/plain; charset=utf-8',
+  },
+  {
+    id: 'nature',
+    downloadExtension: 'txt',
+    contentType: 'text/plain; charset=utf-8',
+  },
+  {
+    id: 'vancouver',
+    downloadExtension: 'txt',
+    contentType: 'text/plain; charset=utf-8',
+  },
+] as const
+
+type CitationStyleId = (typeof CITATION_STYLES)[number]['id']
+type CitationStyleConfig = (typeof CITATION_STYLES)[number]
+type CitationCatalog = Record<string, Record<CitationStyleId, string>>
+
+const citationCatalog = EXPLICIT_CITATION_CATALOG as CitationCatalog
+
+function buildCitationExport(datasetIds: string[], styleId: CitationStyleId) {
+  const style = CITATION_STYLES.find((item) => item.id === styleId)
+
+  if (!style) {
+    throw new Error(`Unsupported citation style: ${styleId}`)
+  }
+
+  const uniqueDatasetIds = Array.from(new Set(datasetIds))
+  const selectedEntries: string[] = []
+  const unmatchedDatasetIds: string[] = []
+  const seenEntries = new Set<string>()
+
+  for (const datasetId of uniqueDatasetIds) {
+    const entry = citationCatalog[datasetId]?.[styleId]
+
+    if (!entry) {
+      unmatchedDatasetIds.push(datasetId)
+      continue
+    }
+
+    if (!seenEntries.has(entry)) {
+      seenEntries.add(entry)
+      selectedEntries.push(entry)
+    }
+  }
+
+  if (selectedEntries.length === 0) {
+    throw new Error(
+      unmatchedDatasetIds.length
+        ? `No citations matched for: ${unmatchedDatasetIds.join(', ')}`
+        : 'No citations matched the requested dataset selection',
+    )
+  }
+
+  if (unmatchedDatasetIds.length > 0) {
+    throw new Error(`Missing citation mappings for: ${unmatchedDatasetIds.join(', ')}`)
+  }
+
+  return {
+    content: renderStyleExport(style, selectedEntries),
+    contentType: style.contentType,
+    fileName: buildExportFileName(uniqueDatasetIds, style),
+  }
+}
+
+function renderStyleExport(style: CitationStyleConfig, entries: string[]) {
+  if (style.id === 'endnote-xml') {
+    const records = entries
+      .map((entry) =>
+        entry
+          .replace(/^<\?xml[^>]*>\s*/i, '')
+          .replace(/^<xml><records>/i, '')
+          .replace(/<\/records><\/xml>\s*$/i, ''),
+      )
+      .join('')
+
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<xml><records>${records}</records></xml>\n`
+  }
+
+  if (style.id === 'nature' || style.id === 'vancouver') {
+    return `${entries
+      .map((entry, index) => `${index + 1}. ${entry.replace(/^\d+\.\s*/, '').trim()}`)
+      .join('\n\n')
+      .trim()}\n`
+  }
+
+  return `${entries.map((entry) => entry.trimEnd()).join('\n\n').trim()}\n`
+}
+
+function buildExportFileName(datasetIds: string[], style: CitationStyleConfig) {
+  const datasetLabel = datasetIds.length === 1 ? datasetIds[0] : `${datasetIds.length}-datasets`
+  return `lol-citations-${datasetLabel}-${style.id}.${style.downloadExtension}`
 }
 
 let payload: ArchivePayload | null = null
@@ -375,6 +499,34 @@ const server = createServer((request, response) => {
         console.error('Failed to build bulk CSV:', error)
         json(response, 500, { error: 'Failed to build bulk CSV' })
       })
+    return
+  }
+
+  if (url.pathname === '/api/export-citations') {
+    const idsRaw = url.searchParams.get('ids') ?? ''
+    const styleId = url.searchParams.get('style') ?? 'apa'
+    const datasetIds = idsRaw.split(',').map((value) => value.trim()).filter(Boolean)
+
+    if (datasetIds.length === 0) {
+      json(response, 400, { error: 'No dataset ids provided' })
+      return
+    }
+
+    try {
+      const result = buildCitationExport(datasetIds, styleId as CitationStyleId)
+
+      response.writeHead(200, {
+        'Content-Type': result.contentType,
+        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        'Access-Control-Allow-Origin': '*',
+      })
+      response.end(result.content)
+    } catch (error: unknown) {
+      console.error('Failed to export citations:', error)
+      json(response, 422, {
+        error: error instanceof Error ? error.message : 'Failed to export citations',
+      })
+    }
     return
   }
 

@@ -1,6 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useArchiveData } from '../data/archiveClient'
+import {
+  CITATION_STYLE_OPTIONS,
+  downloadCitationExport,
+  formatCitationPreviewText,
+  getCitationExportText,
+  type CitationStyleId,
+} from '../data/citationExports'
 
 function formatProportion(value: string) {
   const n = Number(value)
@@ -25,6 +32,38 @@ export function DatasetPage() {
   const INITIAL_ROWS = 10
   const TABLE_CAP = 250
   const [expanded, setExpanded] = useState(false)
+  const [citationStyle, setCitationStyle] = useState<CitationStyleId>('apa')
+  const [citationPreview, setCitationPreview] = useState('')
+  const [citationPreviewError, setCitationPreviewError] = useState('')
+  const [citationPreviewLoading, setCitationPreviewLoading] = useState(false)
+  const [copyStatus, setCopyStatus] = useState('')
+  const citationPreviewRows = Math.min(10, Math.max(3, citationPreview.split('\n').length))
+  const metadataRows = dataset
+    ? [
+        { label: 'Year Range', value: dataset.yearRange },
+        { label: 'Language', value: dataset.metadata.language },
+        { label: 'Statements', value: dataset.metadata.statementCount.toLocaleString() },
+        { label: 'Ground Truth', value: dataset.metadata.groundTruth },
+        { label: 'Topic', value: dataset.metadata.topic },
+        { label: 'Type of Deception', value: dataset.metadata.typeOfDeception },
+        {
+          label: 'Truthful/Deceptive Proportion',
+          value: dataset.metadata.truthfulDeceptiveProportion
+            ? formatProportion(dataset.metadata.truthfulDeceptiveProportion)
+            : '',
+        },
+        { label: 'Source & Research Design', value: sourceAndResearchDesign },
+        { label: 'Within/Between Design', value: dataset.metadata.withinOrBetweenDesign },
+        { label: 'Format', value: dataset.metadata.format },
+        { label: 'Open-source', value: dataset.metadata.openSource },
+        { label: 'Reuse', value: dataset.metadata.reuse },
+        { label: 'Dataset Available', value: dataset.metadata.datasetAvailable },
+        {
+          label: 'Documented in Academic Outlet',
+          value: dataset.metadata.documentedInAcademicOutlet,
+        },
+      ]
+    : []
   const visibleRows = csvPreview
     ? expanded
       ? csvPreview.fullRows.slice(0, TABLE_CAP)
@@ -49,6 +88,61 @@ export function DatasetPage() {
     a.click()
   }
 
+  const exportCitation = () => {
+    if (!dataset) return
+    void downloadCitationExport(apiBaseUrl, [dataset.id], citationStyle).catch((error: unknown) => {
+      window.alert(error instanceof Error ? error.message : 'Unable to export citation.')
+    })
+  }
+
+  const viewCitation = () => {
+    if (!dataset) return
+
+    if (citationPreview || citationPreviewError) {
+      setCitationPreview('')
+      setCitationPreviewError('')
+      setCitationPreviewLoading(false)
+      setCopyStatus('')
+      return
+    }
+
+    setCitationPreviewLoading(true)
+    setCitationPreviewError('')
+    setCopyStatus('')
+
+    void getCitationExportText(apiBaseUrl, [dataset.id], citationStyle)
+      .then((text) => {
+        setCitationPreview(formatCitationPreviewText(citationStyle, text))
+      })
+      .catch((error: unknown) => {
+        setCitationPreview('')
+        setCitationPreviewError(error instanceof Error ? error.message : 'Unable to load citation.')
+      })
+      .finally(() => {
+        setCitationPreviewLoading(false)
+      })
+  }
+
+  const copyCitation = () => {
+    if (!citationPreview) return
+
+    void navigator.clipboard
+      .writeText(citationPreview)
+      .then(() => {
+        setCopyStatus('Copied')
+      })
+      .catch(() => {
+        setCopyStatus('Copy failed')
+      })
+  }
+
+  useEffect(() => {
+    setCitationPreview('')
+    setCitationPreviewError('')
+    setCitationPreviewLoading(false)
+    setCopyStatus('')
+  }, [dataset?.id, citationStyle])
+
   if (!dataset) {
     return (
       <section className="panel">
@@ -66,59 +160,104 @@ export function DatasetPage() {
       <p className="eyebrow">Dataset Detail</p>
       <h2>{dataset.name}</h2>
       <p>{dataset.description}</p>
-      <div className="detail-grid">
+
+      <div className="citation-export-card" aria-label="Dataset citation export">
         <div>
-          <h3>Core metadata</h3>
-          <ul className="meta-list">
-            <li>Language: {dataset.metadata.language}</li>
-            <li>Statements: {dataset.metadata.statementCount.toLocaleString()}</li>
-            <li>Ground truth: {dataset.metadata.groundTruth}</li>
-            <li>Topic: {dataset.metadata.topic}</li>
-            <li>Source and research design: {sourceAndResearchDesign}</li>
-            {dataset.metadata.typeOfDeception ? (
-              <li>Type of deception: {dataset.metadata.typeOfDeception}</li>
-            ) : null}
-            {dataset.metadata.truthfulDeceptiveProportion ? (
-              <li>
-                Truthful/deceptive proportion: {formatProportion(dataset.metadata.truthfulDeceptiveProportion)}
-              </li>
-            ) : null}
-            {dataset.metadata.withinOrBetweenDesign ? (
-              <li>Within/Between design: {dataset.metadata.withinOrBetweenDesign}</li>
-            ) : null}
-            {dataset.metadata.format ? (
-              <li>Format: {dataset.metadata.format}</li>
-            ) : null}
-            {dataset.metadata.openSource ? (
-              <li>Open-source: {dataset.metadata.openSource}</li>
-            ) : null}
-            {dataset.metadata.reuse ? (
-              <li>Reuse: {dataset.metadata.reuse}</li>
-            ) : null}
-            {dataset.metadata.datasetAvailable ? (
-              <li>Dataset available: {dataset.metadata.datasetAvailable}</li>
-            ) : null}
-            {dataset.metadata.documentedInAcademicOutlet ? (
-              <li>Documented in academic outlet: {dataset.metadata.documentedInAcademicOutlet}</li>
-            ) : null}
-            <li>Coverage: {dataset.yearRange}</li>
-            <li>
-              Original source:{' '}
-              {dataset.originalSource.url !== '#' ? (
-                <a
-                  href={dataset.originalSource.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-link"
-                >
-                  {dataset.originalSource.label}
-                </a>
-              ) : (
-                <span>{dataset.originalSource.label}</span>
-              )}
-            </li>
-          </ul>
+          <h3>Export citation</h3>
+          <p className="citation-export-copy">
+            Download the source reference for this dataset in the citation style you need.
+          </p>
         </div>
+        <div className="citation-export-controls">
+          <label className="citation-export-label" htmlFor="dataset-citation-style">
+            Style
+          </label>
+          <select
+            id="dataset-citation-style"
+            className="citation-export-select"
+            value={citationStyle}
+            onChange={(event) => setCitationStyle(event.target.value as CitationStyleId)}
+          >
+            {CITATION_STYLE_OPTIONS.map((style) => (
+              <option key={style.id} value={style.id}>
+                {style.label}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="csv-toggle-btn" onClick={exportCitation}>
+            Export citation
+          </button>
+          <button type="button" className="nav-link" onClick={viewCitation}>
+            {citationPreviewLoading
+              ? 'Loading…'
+              : citationPreview || citationPreviewError
+                ? 'Unview citation'
+                : 'View citation'}
+          </button>
+        </div>
+        {citationPreview || citationPreviewError ? (
+          <div className="citation-preview-block" aria-live="polite">
+            {citationPreviewError ? (
+              <p className="citation-preview-error">{citationPreviewError}</p>
+            ) : (
+              <>
+                <textarea
+                  className="citation-preview-text citation-preview-text-single"
+                  value={citationPreview}
+                  readOnly
+                  rows={citationPreviewRows}
+                />
+                <div className="citation-preview-actions">
+                  <button type="button" className="csv-toggle-btn" onClick={copyCitation}>
+                    Copy citation
+                  </button>
+                  {copyStatus ? <span className="citation-preview-status">{copyStatus}</span> : null}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      <h3>Metadata</h3>
+      <div className="bulk-table-wrap">
+        <table className="bulk-table">
+          <thead>
+            <tr>
+              <th className="bulk-table-field-col">Field</th>
+              <th>{dataset.name}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {metadataRows.map(({ label, value }) => (
+              <tr key={label}>
+                <td className="bulk-table-field-col">{label}</td>
+                <td>
+                  {value != null && value !== ''
+                    ? String(value)
+                    : <span className="bulk-table-empty">—</span>}
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td className="bulk-table-field-col">Original Source</td>
+              <td>
+                {dataset.originalSource.url !== '#' ? (
+                  <a
+                    href={dataset.originalSource.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link"
+                  >
+                    {dataset.originalSource.label}
+                  </a>
+                ) : (
+                  <span>{dataset.originalSource.label}</span>
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div className="csv-preview-block">
