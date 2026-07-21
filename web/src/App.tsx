@@ -14,7 +14,7 @@ function App() {
   if (loading) {
     return (
       <div className="app-shell">
-        <div className="app-window" role="application" aria-label="Library of Lies window">
+        <div className="app-window" role="application" aria-label="Deception Archive window">
           <div className="window-body">
             <main className="page-content">
               <section className="panel">
@@ -32,7 +32,7 @@ function App() {
   if (error) {
     return (
       <div className="app-shell">
-        <div className="app-window" role="application" aria-label="Library of Lies window">
+        <div className="app-window" role="application" aria-label="Deception Archive window">
           <div className="window-body">
             <main className="page-content">
               <section className="panel">

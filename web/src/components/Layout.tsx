@@ -3,15 +3,14 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 export function Layout() {
   return (
     <div className="app-shell">
-      <div className="app-window" role="application" aria-label="Library of Lies window">
+      <div className="app-window" role="application" aria-label="Deception Archive window">
         <header className="window-title-bar">
           <div className="window-title-left">
             <span className="window-app-dot" aria-hidden="true" />
             <Link to="/" className="window-title-link" aria-label="Go to homepage">
-              <p className="window-title">Library of Lies</p>
+              <p className="window-title">DECEPTION ARCHIVE</p>
             </Link>
           </div>
-          <p className="window-title-note">Deception Data Archive</p>
         </header>
 
         <div className="window-menu-bar" aria-label="Application menu">

@@ -122,8 +122,21 @@ a {
 }
 
 .window-title-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
   text-decoration: none;
-  color: inherit;
+}
+
+.window-logo {
+  display: block;
+  height: 58px;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
 }
 
 .window-title-link:focus-visible {
@@ -132,12 +145,12 @@ a {
   border-radius: 6px;
 }
 
-.window-title-note {
-  font-size: 1.08rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #28455f;
-  font-weight: 800;
+@media (max-width: 820px) {
+  .window-logo {
+    height: 46px;
+  }
+
+  .window-title { font-size: 1.08rem; }
 }
 
 .window-actions {
@@ -940,6 +953,34 @@ a {
 
 .about-section strong {
   color: #0f517d;
+}
+
+.about-rich-text {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 90ch;
+}
+
+.about-text-block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.about-text-block h3 {
+  margin: 0;
+  font-size: 1.03rem;
+  letter-spacing: 0.01em;
+  color: #0f517d;
+}
+
+.about-text-block p {
+  margin: 0;
+  line-height: 1.68;
+  color: #2d4f6c;
+}
+
+.about-text-block em {
+  color: #215374;
 }
 
 @media (max-width: 760px) {
