@@ -210,14 +210,15 @@ export const archiveData: { datasets: DatasetRecord[]; terms: TermEntry[] } = {
     ],
     "metadata": {
       "language": "English",
-      "statementCount": 32,
+      "statementCount": 9253,
       "groundTruth": "Clear and verifiable",
       "topic": "Interview on task performance",
       "sourceAndResearchDesign": "Offline experiment",
       "experimentalDesign": "Offline experiment",
       "withinOrBetweenDesign": "Within subject",
       "reuse": "Yes",
-      "truthfulDeceptiveProportion": "0.5",
+      "openSource": "Yes",
+      "truthfulDeceptiveProportion": "0.43",
       "format": "Transcribed",
       "typeOfDeception": "Exaggeration, minimization",
       "datasetAvailable": "Yes",
@@ -514,6 +515,40 @@ export const archiveData: { datasets: DatasetRecord[]; terms: TermEntry[] } = {
     }
   },
   {
+    "id": "diplomacy-2020",
+    "name": "Diplomacy dataset (Peskov et al., 2020)",
+    "description": "Diplomacy dataset (Peskov et al., 2020). Topic: Open-domain. Deception type: mixed. Design/source: Online naturalistic data.",
+    "yearRange": "2020-2020",
+    "tags": [
+      "Open-domain",
+      "mixed",
+      "Typed",
+      "English"
+    ],
+    "metadata": {
+      "language": "English",
+      "statementCount": 13132,
+      "groundTruth": "Clear but not verifiable",
+      "topic": "Open-domain",
+      "sourceAndResearchDesign": "Online naturalistic data",
+      "experimentalDesign": "Online naturalistic data",
+      "withinOrBetweenDesign": "Within subject/ Dialogo",
+      "reuse": "Yes",
+      "openSource": "Yes",
+      "documentedInAcademicOutlet": "Yes",
+      "truthfulDeceptiveProportion": "21.2",
+      "format": "Typed",
+      "typeOfDeception": "mixed",
+      "datasetAvailable": "Yes",
+      "note": "Source file: LOL/Dataset_id/DIPLOMACY_2020.csv",
+      "key": "R2T5MFL3"
+    },
+    "originalSource": {
+      "label": "Yes",
+      "url": "#"
+    }
+  },
+  {
     "id": "hip-2022",
     "name": "Hippocorpus (Sap et al., 2022)",
     "description": "Hippocorpus (Sap et al., 2022). Topic: Past memorable experiences. Deception type: Fabrication. Design/source: Online experiment.",
@@ -569,6 +604,39 @@ export const archiveData: { datasets: DatasetRecord[]; terms: TermEntry[] } = {
       "typeOfDeception": "Fabrication",
       "datasetAvailable": "Yes",
       "note": "Source file: LOL/Dataset_id/INT_2021_id.csv"
+    },
+    "originalSource": {
+      "label": "Yes",
+      "url": "#"
+    }
+  },
+  {
+    "id": "kleinberg-2018",
+    "name": "Kleinberg et al., (2018) - Study 2",
+    "description": "Kleinberg et al., (2018) - Study 2. Topic: future intentions overall (with + without model statement). Deception type: fabrication. Design/source: Online experiments.",
+    "yearRange": "2018-2018",
+    "tags": [
+      "future intentions overall (with + without model statement)",
+      "fabrication",
+      "Typed",
+      "English"
+    ],
+    "metadata": {
+      "language": "English",
+      "statementCount": 413,
+      "groundTruth": "Clear but not verifiable",
+      "topic": "future intentions overall (with + without model statement)",
+      "sourceAndResearchDesign": "Online experiments",
+      "experimentalDesign": "Online experiments",
+      "reuse": "No",
+      "openSource": "Yes",
+      "documentedInAcademicOutlet": "Yes, same paper",
+      "truthfulDeceptiveProportion": "1",
+      "format": "Typed",
+      "typeOfDeception": "fabrication",
+      "datasetAvailable": "Yes",
+      "note": "Source file: LOL/Dataset_id/KLEINBERG_2018.csv",
+      "key": "XX5SXPGY"
     },
     "originalSource": {
       "label": "Yes",
