@@ -5,13 +5,13 @@ This repo has two moving parts:
 - `web/` is the archive frontend.
 - `backend/` is the small JSON API that serves the archive payload in production.
 
-The live domain is `lpstudies.net`. The old study stays on the server at `/var/www/study` for rollback.
+The live archive domain is `deception-archive.net`. The old study stays on the server at `/var/www/study` for rollback.
 
 ## URL Map
 
-- `https://lpstudies.net/` serves the archive frontend from `/var/www/archive`
-- `https://lpstudies.net/api/archive-payload` serves the archive payload JSON
-- `https://lpstudies.net/api/health` checks the backend container health through nginx
+- `https://deception-archive.net/` serves the archive frontend from `/var/www/archive`
+- `https://deception-archive.net/api/archive-payload` serves the archive payload JSON
+- `https://deception-archive.net/api/health` checks backend container health through nginx
 
 ## Local Development
 
@@ -70,6 +70,12 @@ rsync -av --delete \
 	root@157.90.127.76:/var/lib/deception-archive/LOL/
 ```
 
+If your local macOS rsync is older, use `-P` for progress and resumable transfers:
+
+```bash
+rsync -av --delete -P /Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/ root@157.90.127.76:/var/lib/deception-archive/LOL/
+```
+
 After this initial upload, normal `git push` / `git pull` deploys do not remove the CSV files because they live outside the git repository path.
 
 Only re-run the `rsync` command when the raw LOL CSV dataset changes.
@@ -87,6 +93,14 @@ rsync -av --delete \
 	/Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/ \
 	root@157.90.127.76:/var/lib/deception-archive/LOL/
 ```
+
+macOS-compatible resumable variant:
+
+```bash
+rsync -av --delete -P /Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/ root@157.90.127.76:/var/lib/deception-archive/LOL/
+```
+
+Important: sync the whole `LOL/` folder when possible so `Deception_archive_metadata.csv` and `Dataset_id/*.csv` stay aligned.
 
 #### Option B: Upload a single changed dataset CSV
 
@@ -113,8 +127,8 @@ docker compose up -d --build
 Then verify the API is healthy and returning data:
 
 ```bash
-curl -s https://lpstudies.net/api/health
-curl -s https://lpstudies.net/api/archive-payload | head
+curl -s https://deception-archive.net/api/health
+curl -s https://deception-archive.net/api/archive-payload | head
 ```
 
 ## GitHub Workflow
@@ -175,9 +189,9 @@ systemctl reload nginx
 ### Step 5: Verify the live site
 
 ```bash
-curl -I https://lpstudies.net/
-curl -s https://lpstudies.net/api/health
-curl -s https://lpstudies.net/api/archive-payload | head
+curl -I https://deception-archive.net/
+curl -s https://deception-archive.net/api/health
+curl -s https://deception-archive.net/api/archive-payload | head
 ```
 
 ## Nginx Layout
@@ -208,7 +222,35 @@ systemctl reload nginx
 Then verify:
 
 ```bash
-curl -I https://lpstudies.net/
+curl -I https://deception-archive.net/
+```
+
+If the archive domain certificate is managed separately, renew for that host instead:
+
+```bash
+certbot certonly --standalone -d deception-archive.net -d www.deception-archive.net
+systemctl reload nginx
+```
+
+## Troubleshooting Data Load Failures
+
+If the site loads but datasets do not appear, check API endpoints first:
+
+```bash
+curl -i https://deception-archive.net/api/health
+curl -i https://deception-archive.net/api/archive-payload | head
+```
+
+- If `/api/*` returns HTML instead of JSON, nginx routing is wrong (the `/api/` proxy is not pointing to `127.0.0.1:3000`).
+- If `/api/health` returns `503` with `Metadata CSV row missing for dataset id ...`, the metadata CSV on server is out of sync with dataset files.
+
+For metadata mismatch errors, re-sync the entire LOL folder, then restart backend:
+
+```bash
+rsync -av --delete -P /Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/ root@157.90.127.76:/var/lib/deception-archive/LOL/
+ssh root@157.90.127.76
+cd /var/www/deceptionArchive/backend
+docker compose up -d --build
 ```
 
 ## Rollback to the Old Study

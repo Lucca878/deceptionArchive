@@ -205,7 +205,10 @@ const defaultDatasetCsvRoot = path.join(webDataRoot, 'LOL', 'Dataset_id')
 const datasetCsvRoot = process.env.LOL_DATASET_DIR?.trim()
   ? path.resolve(process.env.LOL_DATASET_DIR)
   : defaultDatasetCsvRoot
+const datasetCsvParentDir = path.dirname(datasetCsvRoot)
 const metadataCsvCandidates = [
+  path.join(datasetCsvParentDir, 'Deception_archive_metadata.csv'),
+  path.join(datasetCsvParentDir, 'Deception archive_metadata.csv'),
   path.join(webDataRoot, 'LOL', 'Deception_archive_metadata.csv'),
   path.join(webDataRoot, 'LOL', 'Deception archive_metadata.csv'),
 ]
