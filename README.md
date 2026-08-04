@@ -74,6 +74,49 @@ After this initial upload, normal `git push` / `git pull` deploys do not remove 
 
 Only re-run the `rsync` command when the raw LOL CSV dataset changes.
 
+### Updating CSV files later (replace old files)
+
+If you changed one or more files under `web/src/data/LOL/`, upload them again to the server path `/var/lib/deception-archive/LOL/`.
+
+#### Option A: Sync the whole LOL folder (recommended)
+
+This is the safest option because it updates changed files and removes deleted files on the server.
+
+```bash
+rsync -av --delete \
+	/Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/ \
+	root@157.90.127.76:/var/lib/deception-archive/LOL/
+```
+
+#### Option B: Upload a single changed dataset CSV
+
+Use this when only one file changed and you do not want to sync the whole folder.
+
+```bash
+scp \
+	/Users/luccapfruender/Desktop/deceptionArchive/web/src/data/LOL/Dataset_id/DEFABEL_2025_id.csv \
+	root@157.90.127.76:/var/lib/deception-archive/LOL/Dataset_id/
+```
+
+You can use the same pattern for any other file in `LOL/` (for example `Deception_archive_metadata.csv`).
+
+#### Apply and verify on server
+
+After uploading changed CSV files, restart the backend container so it reloads data:
+
+```bash
+ssh root@157.90.127.76
+cd /var/www/deceptionArchive/backend
+docker compose up -d --build
+```
+
+Then verify the API is healthy and returning data:
+
+```bash
+curl -s https://lpstudies.net/api/health
+curl -s https://lpstudies.net/api/archive-payload | head
+```
+
 ## GitHub Workflow
 
 Use this exact flow after making code changes locally:
