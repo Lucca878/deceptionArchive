@@ -778,7 +778,7 @@ a {
 
 .dataset-card {
   display: block;
-  min-height: 350px;
+  min-height: 310px;
   perspective: 1000px;
   color: inherit;
   text-decoration: none;
@@ -800,7 +800,7 @@ a {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 350px;
+  min-height: 310px;
   transform-style: preserve-3d;
   transition: transform 420ms ease;
 }
@@ -837,14 +837,14 @@ a {
 }
 
 .card-years {
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   color: var(--text-soft);
   letter-spacing: 0.03em;
 }
 
 .dataset-card h3 {
   margin-top: 0.2rem;
-  font-size: 1rem;
+  font-size: 1.08rem;
   line-height: 1.25;
 }
 
@@ -863,7 +863,7 @@ a {
   padding-left: 1rem;
   display: grid;
   gap: 0.2rem;
-  font-size: 0.83rem;
+  font-size: 0.89rem;
   color: #375a77;
 }
 
@@ -874,16 +874,14 @@ a {
 }
 
 .tags {
-  margin-top: auto;
+  margin-top: 0.2rem;
   display: flex;
   gap: 0.34rem;
   flex-wrap: wrap;
-  max-height: 3.4rem;
-  overflow-y: auto;
 }
 
 .tag {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: #1b567f;
   border-radius: 999px;
   border: 1px solid #b9d8f3;
@@ -923,12 +921,35 @@ a {
   margin: 0;
 }
 
+.about-intro-row {
+  position: relative;
+  padding-right: clamp(185px, 24vw, 250px);
+}
+
+.about-intro-logos {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(175px, 22vw, 235px);
+  display: grid;
+  gap: 0.65rem;
+}
+
 .about-lead {
   margin: 0;
   padding: 0.1rem 0.2rem;
-  max-width: 90ch;
   line-height: 1.65;
   color: #2a4e6c;
+}
+
+.about-intro-logo {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.35rem;
+  object-fit: contain;
 }
 
 .about-sections {
@@ -979,11 +1000,49 @@ a {
   color: #2d4f6c;
 }
 
+.about-text-block ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.about-text-block li {
+  line-height: 1.68;
+  color: #2d4f6c;
+}
+
 .about-text-block em {
   color: #215374;
 }
 
+.about-team-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.about-team-logos img {
+  height: auto;
+  width: clamp(170px, 34vw, 260px);
+  max-width: 100%;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.35rem;
+}
+
 @media (max-width: 760px) {
+  .about-intro-row {
+    padding-right: 0;
+  }
+
+  .about-intro-logos {
+    position: static;
+    width: min(88%, 280px);
+    margin: 0.5rem auto 0;
+  }
+
   .about-hero {
     padding: 0.8rem;
   }
@@ -1037,6 +1096,31 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+}
+
+.report-issue-box {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  background: linear-gradient(120deg, #f7fbff, #f4fffb);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.report-issue-box p {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.download-placeholder-note {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  color: #8a5a19;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .bulk-panel {

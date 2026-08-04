@@ -19,6 +19,7 @@ export interface DatasetCardMetadata {
   statementCount: number
   groundTruth: GroundTruthProcedure
   topic: string
+  topicStandardized?: string
   sourceAndResearchDesign?: string
   experimentalDesign?: ExperimentalDesign
   withinOrBetweenDesign?: string
@@ -93,6 +94,7 @@ export interface LolDatasetInfoRecord {
   format?: string
   language?: string
   topic?: string
+  topicStandardized?: string
   typeOfDeception?: string
   sourceAndResearchDesign?: string
   datasetAvailable?: string

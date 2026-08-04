@@ -32,19 +32,26 @@ export function DatasetPage() {
   const INITIAL_ROWS = 10
   const TABLE_CAP = 250
   const [expanded, setExpanded] = useState(false)
+  const [dataVersion, setDataVersion] = useState<'standardized' | 'original'>('standardized')
+  const [originalDownloadNotice, setOriginalDownloadNotice] = useState('')
   const [citationStyle, setCitationStyle] = useState<CitationStyleId>('apa')
   const [citationPreview, setCitationPreview] = useState('')
   const [citationPreviewError, setCitationPreviewError] = useState('')
   const [citationPreviewLoading, setCitationPreviewLoading] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
   const citationPreviewRows = Math.min(10, Math.max(3, citationPreview.split('\n').length))
+  const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
   const metadataRows = dataset
     ? [
         { label: 'Year Range', value: dataset.yearRange },
         { label: 'Language', value: dataset.metadata.language },
         { label: 'Statements', value: dataset.metadata.statementCount.toLocaleString() },
         { label: 'Ground Truth', value: dataset.metadata.groundTruth },
-        { label: 'Topic', value: dataset.metadata.topic },
+        {
+          label: 'Macro topic',
+          value: dataset.metadata.topicStandardized ?? dataset.metadata.topic,
+        },
+        { label: 'Sub-topic', value: dataset.metadata.topic },
         { label: 'Type of Deception', value: dataset.metadata.typeOfDeception },
         {
           label: 'Truthful/Deceptive Proportion',
@@ -55,9 +62,6 @@ export function DatasetPage() {
         { label: 'Source & Research Design', value: sourceAndResearchDesign },
         { label: 'Within/Between Design', value: dataset.metadata.withinOrBetweenDesign },
         { label: 'Format', value: dataset.metadata.format },
-        { label: 'Open-source', value: dataset.metadata.openSource },
-        { label: 'Reuse', value: dataset.metadata.reuse },
-        { label: 'Dataset Available', value: dataset.metadata.datasetAvailable },
         {
           label: 'Documented in Academic Outlet',
           value: dataset.metadata.documentedInAcademicOutlet,
@@ -86,6 +90,18 @@ export function DatasetPage() {
     a.href = url
     a.download = `${dataset.id}.csv`
     a.click()
+  }
+
+  const downloadOriginalCsv = () => {
+    setOriginalDownloadNotice('Original dataset is not yet available.')
+  }
+
+  const downloadSelectedCsv = () => {
+    if (dataVersion === 'standardized') {
+      downloadCsv()
+      return
+    }
+    downloadOriginalCsv()
   }
 
   const exportCitation = () => {
@@ -155,11 +171,36 @@ export function DatasetPage() {
     )
   }
 
+  const issueSubject = encodeURIComponent(`Deception Archive issue: ${dataset.name}`)
+  const issueBody = encodeURIComponent(
+    [
+      'Dear Deception Archive Team,',
+      '',
+      'I would like to report a mistake or issue I encountered.',
+      '',
+      `Dataset: ${dataset.name}`,
+      `Dataset ID: ${dataset.id}`,
+      '',
+      'Issue details:',
+      '',
+      '',
+    ].join('\n'),
+  )
+  const issueMailto = `mailto:${issueRecipients}?subject=${issueSubject}&body=${issueBody}`
+
   return (
-    <section className="panel">
-      <p className="eyebrow">Dataset Detail</p>
-      <h2>{dataset.name}</h2>
-      <p>{dataset.description}</p>
+    <section className="panel about-page">
+      <header className="about-hero bulk-inspect-header">
+        <div>
+          <p className="eyebrow"></p>
+          <h2>{dataset.name}</h2>
+        </div>
+        <div className="bulk-inspect-actions">
+          <Link to="/" className="csv-toggle-btn">
+            Back to datasets
+          </Link>
+        </div>
+      </header>
 
       <div className="citation-export-card" aria-label="Dataset citation export">
         <div>
@@ -239,23 +280,6 @@ export function DatasetPage() {
                 </td>
               </tr>
             ))}
-            <tr>
-              <td className="bulk-table-field-col">Original Source</td>
-              <td>
-                {dataset.originalSource.url !== '#' ? (
-                  <a
-                    href={dataset.originalSource.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-link"
-                  >
-                    {dataset.originalSource.label}
-                  </a>
-                ) : (
-                  <span>{dataset.originalSource.label}</span>
-                )}
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -263,12 +287,27 @@ export function DatasetPage() {
       <div className="csv-preview-block">
         <div className="csv-preview-header-row">
           <h3>CSV Preview</h3>
+          <select
+            id="dataset-data-version"
+            className="citation-export-select"
+            aria-label="Choose dataset format"
+            value={dataVersion}
+            onChange={(event) => {
+              setDataVersion(event.target.value as 'standardized' | 'original')
+              setOriginalDownloadNotice('')
+            }}
+          >
+            <option value="standardized">Standardized</option>
+            <option value="original">Original</option>
+          </select>
           {csvPreview && (
-            <button type="button" className="csv-toggle-btn" onClick={downloadCsv}>
-              Download CSV ({totalRows.toLocaleString()} rows)
+            <button type="button" className="csv-toggle-btn" onClick={downloadSelectedCsv}>
+              {dataVersion === 'standardized'
+                ? `Download standardized CSV (${totalRows.toLocaleString()} rows)`
+                : 'Download original CSV'}
             </button>
           )}
-          {csvPreview && availableRows > INITIAL_ROWS && (
+          {dataVersion === 'standardized' && csvPreview && availableRows > INITIAL_ROWS && (
             <button
               type="button"
               className="csv-toggle-btn"
@@ -280,7 +319,12 @@ export function DatasetPage() {
             </button>
           )}
         </div>
-        {csvPreview ? (
+        {originalDownloadNotice ? (
+          <p className="download-placeholder-note" role="status">{originalDownloadNotice}</p>
+        ) : null}
+        {dataVersion === 'original' ? (
+          <p className="csv-preview-caption">Original dataset preview is not yet available.</p>
+        ) : csvPreview ? (
           <>
             <p className="csv-preview-caption">
               Showing {visibleRows.length.toLocaleString()} of {totalRows.toLocaleString()} rows
@@ -314,6 +358,11 @@ export function DatasetPage() {
         ) : (
           <p className="csv-preview-caption">No CSV preview is available for this dataset.</p>
         )}
+      </div>
+
+      <div className="report-issue-box" aria-label="Report dataset issue">
+        <p>If you encounter any mistakes or issues, please email us here.</p>
+        <a href={issueMailto} className="text-link">Click to email</a>
       </div>
 
       <Link to="/" className="text-link">

@@ -36,20 +36,9 @@ async function loadArchivePayload(): Promise<ArchivePayload> {
       return (await response.json()) as ArchivePayload
     }
 
-    if (!import.meta.env.DEV) {
-      throw new Error(`Failed to load archive data (${response.status})`)
-    }
+    throw new Error(`Failed to load archive data (${response.status})`)
   } catch {
-    if (!import.meta.env.DEV) {
-      throw new Error('Failed to load archive data')
-    }
-  }
-
-  const [{ archiveData }] = await Promise.all([import('./archiveData')])
-
-  return {
-    ...archiveData,
-    csvPreviewsByDatasetId: {},
+    throw new Error('Failed to load archive data')
   }
 }
 

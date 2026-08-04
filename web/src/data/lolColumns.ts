@@ -42,16 +42,6 @@ export const LOL_TERMS: TermEntry[] = [
       'Whether truthful and deceptive conditions are compared within the same participant or between different participant groups.',
   },
   {
-    term: 'Reuse',
-    definition:
-      'Indicates if the dataset reuses or extends material from previous datasets.',
-  },
-  {
-    term: 'Open-source',
-    definition:
-      'Whether the dataset files are publicly accessible and whether the trained model of the original paper is openly available.',
-  },
-  {
     term: 'Dataset Documented In Academic Outlet',
     definition:
       'Notes if there is a paper, proceedings entry, or similar academic source that documents the dataset.',
@@ -75,8 +65,13 @@ export const LOL_TERMS: TermEntry[] = [
     definition: 'Language used in the dataset content.',
   },
   {
-    term: 'Topic',
-    definition: 'Primary topical area represented in the dataset.',
+    term: 'Macro topic',
+    definition:
+      'Standardized high-level topic category used to group related datasets.',
+  },
+  {
+    term: 'Sub-topic',
+    definition: 'Dataset-specific topical focus as reported in the source metadata.',
   },
   {
     term: 'Type of Deception',
@@ -87,11 +82,6 @@ export const LOL_TERMS: TermEntry[] = [
     term: 'Source and research design',
     definition:
       'Where the data comes from and how collection was designed.',
-  },
-  {
-    term: 'Dataset available',
-    definition:
-      'Availability status or access link information for the dataset.',
   },
   {
     term: 'Note',

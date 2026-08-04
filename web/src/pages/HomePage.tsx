@@ -10,8 +10,8 @@ export function HomePage() {
   const [languages_sel, setLanguagesSel] = useState<string[]>([])
   const [deceptionTypes_sel, setDeceptionTypesSel] = useState<string[]>([])
   const [groundTruth_sel, setGroundTruthSel] = useState<string[]>([])
-  const [topics_sel, setTopicsSel] = useState<string[]>([])
-  const [sourceDesign_sel, setSourceDesignSel] = useState<string[]>([])
+  const [macroTopics_sel, setMacroTopicsSel] = useState<string[]>([])
+  const [subTopics_sel, setSubTopicsSel] = useState<string[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const navigate = useNavigate()
   const { data } = useArchiveData()
@@ -50,6 +50,7 @@ export function HomePage() {
 
   // Normalize a string to lowercase-trimmed for case-insensitive comparison
   const norm = (s: string) => s.trim().toLowerCase()
+  const normCategory = (s: string) => norm(s).replace(/[-_]+/g, ' ').replace(/\s+/g, ' ')
 
   const languages = useMemo(() => {
     const seen = new Map<string, string>()
@@ -86,22 +87,22 @@ export function HomePage() {
       .map(([, display]) => display)
   }, [datasets])
 
-  const topicOptions = useMemo(() => {
+  const macroTopicOptions = useMemo(() => {
     const seen = new Map<string, string>()
     for (const d of datasets) {
-      const v = d.metadata.topic?.trim()
-      if (v) seen.set(norm(v), toTitleCase(v))
+      const v = (d.metadata.topicStandardized ?? d.metadata.topic)?.trim()
+      if (v) seen.set(normCategory(v), toTitleCase(v))
     }
     return Array.from(seen.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, display]) => display)
   }, [datasets])
 
-  const sourceDesignOptions = useMemo(() => {
+  const subTopicOptions = useMemo(() => {
     const seen = new Map<string, string>()
     for (const d of datasets) {
-      const v = (d.metadata.sourceAndResearchDesign ?? d.metadata.experimentalDesign ?? '').trim()
-      if (v) seen.set(norm(v), toTitleCase(v))
+      const v = d.metadata.topic?.trim()
+      if (v) seen.set(normCategory(v), toTitleCase(v))
     }
     return Array.from(seen.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
@@ -113,13 +114,17 @@ export function HomePage() {
     const langNorms = languages_sel.map(norm)
     const typeNorms = deceptionTypes_sel.map(norm)
     const groundTruthNorms = groundTruth_sel.map(norm)
-    const topicNorms = topics_sel.map(norm)
-    const sourceDesignNorms = sourceDesign_sel.map(norm)
+    const macroTopicNorms = macroTopics_sel.map(normCategory)
+    const subTopicNorms = subTopics_sel.map(normCategory)
     return datasets.filter((d) => {
+      const datasetSubTopic = normCategory(d.metadata.topic ?? '')
+      const datasetMacroTopic = normCategory(d.metadata.topicStandardized ?? d.metadata.topic ?? '')
+
       if (
         q &&
         !norm(d.name).includes(q) &&
-        !norm(d.metadata.topic).includes(q) &&
+        !datasetSubTopic.includes(q) &&
+        !datasetMacroTopic.includes(q) &&
         !d.tags.some((t) => norm(t).includes(q))
       )
         return false
@@ -133,12 +138,10 @@ export function HomePage() {
       }
       if (groundTruthNorms.length > 0 && !groundTruthNorms.includes(norm(d.metadata.groundTruth ?? '')))
         return false
-      if (topicNorms.length > 0 && !topicNorms.includes(norm(d.metadata.topic ?? '')))
+      if (macroTopicNorms.length > 0 && !macroTopicNorms.includes(datasetMacroTopic))
         return false
-      if (sourceDesignNorms.length > 0) {
-        const sourceDesign = norm(d.metadata.sourceAndResearchDesign ?? d.metadata.experimentalDesign ?? '')
-        if (!sourceDesignNorms.includes(sourceDesign)) return false
-      }
+      if (subTopicNorms.length > 0 && !subTopicNorms.includes(datasetSubTopic))
+        return false
       return true
     })
   }, [
@@ -147,8 +150,8 @@ export function HomePage() {
     languages_sel,
     deceptionTypes_sel,
     groundTruth_sel,
-    topics_sel,
-    sourceDesign_sel,
+    macroTopics_sel,
+    subTopics_sel,
   ])
 
   const hasFilters =
@@ -156,8 +159,8 @@ export function HomePage() {
     languages_sel.length > 0 ||
     deceptionTypes_sel.length > 0 ||
     groundTruth_sel.length > 0 ||
-    topics_sel.length > 0 ||
-    sourceDesign_sel.length > 0
+    macroTopics_sel.length > 0 ||
+    subTopics_sel.length > 0
   const allVisibleSelected = filtered.length > 0 && filtered.every((d) => selectedIds.has(d.id))
 
   if (!data) {
@@ -191,7 +194,7 @@ export function HomePage() {
             id="filter-query"
             className="filter-input"
             type="text"
-            placeholder="name, topic, tag…"
+            placeholder="name, macro topic, sub-topic, tag…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -218,18 +221,18 @@ export function HomePage() {
           onChange={setGroundTruthSel}
         />
         <MultiDropdown
-          id="filter-topic"
-          label="Topic"
-          options={topicOptions}
-          selected={topics_sel}
-          onChange={setTopicsSel}
+          id="filter-macro-topic"
+          label="Macro topic"
+          options={macroTopicOptions}
+          selected={macroTopics_sel}
+          onChange={setMacroTopicsSel}
         />
         <MultiDropdown
-          id="filter-source-design"
-          label="Source & Research Design"
-          options={sourceDesignOptions}
-          selected={sourceDesign_sel}
-          onChange={setSourceDesignSel}
+          id="filter-sub-topic"
+          label="Sub-topic"
+          options={subTopicOptions}
+          selected={subTopics_sel}
+          onChange={setSubTopicsSel}
         />
         {hasFilters && (
           <button
@@ -240,8 +243,8 @@ export function HomePage() {
               setLanguagesSel([])
               setDeceptionTypesSel([])
               setGroundTruthSel([])
-              setTopicsSel([])
-              setSourceDesignSel([])
+              setMacroTopicsSel([])
+              setSubTopicsSel([])
             }}
           >
             Clear

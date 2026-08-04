@@ -8,32 +8,43 @@ interface DatasetCardProps {
   onToggleSelect?: (id: string) => void
 }
 
+function formatProportion(value: string) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return value
+  return n.toFixed(2)
+}
+
 export function DatasetCard({ dataset, selected = false, onToggleSelect }: DatasetCardProps) {
-  const summary = dataset.metadata.topic
-    ? `Deceptive and truthful ${dataset.metadata.topic.toLowerCase()}.`
-    : 'Deceptive and truthful statements.'
-  const sourceAndResearchDesign =
-    dataset.metadata.sourceAndResearchDesign ??
-    dataset.metadata.experimentalDesign ??
-    'Not specified'
+  const yearLabel = (dataset.yearRange ?? '').split('-')[0].trim()
+  const macroTopic = dataset.metadata.topicStandardized ?? dataset.metadata.topic
+  const subTopic = dataset.metadata.topic
+  const filterChips = [
+    { key: 'language', label: 'Language', value: dataset.metadata.language },
+    { key: 'type', label: 'Type', value: dataset.metadata.typeOfDeception ?? '' },
+    { key: 'ground-truth', label: 'Ground Truth', value: dataset.metadata.groundTruth ?? '' },
+    { key: 'macro-topic', label: 'Macro topic', value: macroTopic ?? '' },
+    { key: 'sub-topic', label: 'Sub-topic', value: subTopic ?? '' },
+  ].filter((chip) => chip.value.trim().length > 0)
 
   const cardContent = (
     <>
       <div className="card-head">
-        <p className="card-years">{dataset.yearRange}</p>
+        <p className="card-years">{yearLabel || dataset.yearRange}</p>
         <h3>{dataset.name}</h3>
       </div>
-      <p>{summary}</p>
       <ul className="meta-list">
-        <li>Language: {dataset.metadata.language}</li>
         <li>Statements: {dataset.metadata.statementCount.toLocaleString()}</li>
-        <li>Ground Truth: {dataset.metadata.groundTruth}</li>
-        <li>Source and Research Design: {sourceAndResearchDesign}</li>
+        <li>
+          Truthful/Deceptive: {dataset.metadata.truthfulDeceptiveProportion
+            ? formatProportion(dataset.metadata.truthfulDeceptiveProportion)
+            : '—'}
+        </li>
+        <li>Format: {dataset.metadata.format || '—'}</li>
       </ul>
       <div className="tags">
-        {dataset.tags.map((tag) => (
-          <span key={tag} className="tag">
-            {toTitleCase(tag)}
+        {filterChips.map((chip) => (
+          <span key={chip.key} className="tag" title={`${chip.label}: ${chip.value}`}>
+            {toTitleCase(chip.value)}
           </span>
         ))}
       </div>

@@ -18,7 +18,8 @@ This specification defines the minimum fields required for each dataset publishe
 - metadata.language: Primary language(s).
 - metadata.statementCount: Number of statements/examples.
 - metadata.groundTruth: How labels were established.
-- metadata.topic: Primary topic of deception.
+- metadata.topic: Sub-topic (dataset-specific topical focus).
+- metadata.topicStandardized: Macro topic (standardized high-level category).
 - metadata.sourceAndResearchDesign: Data provenance and collection design.
 
 ## Optional Fields (LOL Appendix Alignment)

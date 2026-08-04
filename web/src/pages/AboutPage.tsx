@@ -1,14 +1,29 @@
+import cpcmLogo from '../assets/cpcmlogo.png'
+import deceptionArchiveLogo from '../assets/deception-archive-logo.png'
+
 export function AboutPage() {
   return (
     <section className="panel about-page">
       <header className="about-hero">
         <p className="eyebrow"></p>
-        <h2>About Us</h2>
+        <h2>About the Deception Archive</h2>
       </header>
 
-      <p className="about-lead">
-        The Deception Archive is part of a research project that systematically mapped out the evidence base in automated verbal deception detection research. In a systematic literature review (Loconte et al., 2026), we identified 291 papers that used text classification methods to detect deception. The Deception Archive brings together the datasets underlying these papers.
-      </p>
+      <div className="about-intro-row">
+        <p className="about-lead">
+          Human judges can barely tell truth from deception, typically just above chance level. As communication increasingly happens in text, language has become one of the richest sources of evidence for detecting deception, and computational methods now offer the means to work with these data at a large scale.
+          <br />
+          <br />
+          The catch: the datasets needed to build and test these methods have been scattered across decades of research, hundreds of publications, and dozens of incompatible formats.
+          <br />
+          <br />
+          The Deception Archive exists to fix that.
+        </p>
+        <div className="about-intro-logos">
+          <img className="about-intro-logo" src={deceptionArchiveLogo} alt="Deception Archive logo" />
+          <img className="about-intro-logo" src={cpcmLogo} alt="CPCM Lab logo" />
+        </div>
+      </div>
 
       <div className="about-rich-text">
         <section className="about-text-block">
@@ -19,14 +34,23 @@ export function AboutPage() {
         </section>
 
         <section className="about-text-block">
-          <h3>Using The Archive</h3>
+          <h3>What it is</h3>
           <p>
-            The Deception Archive is an open-science repository of standardized datasets for verbal deception, designed to support <em>more accessible, transparent, and reproducible research</em>. Researchers can search and download curated datasets for their studies, as well as contribute with new datasets to continuously expand the collection and support future computational, psychological, and linguistic investigations of verbal deception.
+            A curated, standardized, openly accessible repository of verbal deception datasets, built from a large-scale systematic review of the computational deception literature. It currently holds 42 publicly available datasets with nearly 389,000 truthful and deceptive statements, spanning consumer reviews, personal narratives, legal and forensic interviews, digital scams, and lab experiments.
+            <br />
+            <br />
+            Every dataset has been manually inspected and mapped onto a shared structure with consistent identifiers, consistent labeling, and a common truthful/deceptive classification, while keeping the original text and annotations intact. That lets researchers compare and combine datasets that were never before used together.
           </p>
         </section>
 
         <section className="about-text-block">
-          <h3>Resources</h3>
+          <h3>How we built it</h3>
+          <p>
+            The archive grew out of a systematic review that screened over 29,000 publications down to a final set of relevant studies. From there, we identified candidate datasets, retrieved them - through public repositories or by contacting authors directly - and standardised each into a common format.
+          </p>
+          <p>
+            Not every dataset survives the years: links break, formats age, documentation gets lost. Our aim is to centralise datasets and maintain them here to keeps them usable.
+          </p>
           <p>Data archive paper preprint (once available).</p>
           <p>Systematic review / meta-analysis preprint (once available).</p>
         </section>
@@ -34,7 +58,24 @@ export function AboutPage() {
         <section className="about-text-block">
           <h3>Research Team</h3>
           <p>
-            Riccardo Loconte, Lucca Pfünder, Bennett Kleinberg (Tilburg University, The Netherlands), Caterina Borgese (Magna Græcia University of Catanzaro, Italy)
+            The Deception Archive is developed by a research team consisting of:
+          </p>
+          <ul>
+            <li>Riccardo Loconte — Postdoctoral Researcher (Tilburg University, The Netherlands)</li>
+            <li>Caterina Borgese — PhD Researcher (Magna Græcia University of Catanzaro, Italy)</li>
+            <li>Lucca Pfründer — PhD Researcher (Tilburg University, The Netherlands)</li>
+            <li>Bennett Kleinberg — Professor (Tilburg University, The Netherlands)</li>
+          </ul>
+          <p>
+            This project is based at the <strong>Computational Psychology + Computational Methods Lab</strong>{' '}
+            (<a href="https://cpcm-lab.net/" target="_blank" rel="noreferrer">https://cpcm-lab.net/</a>).
+          </p>
+        </section>
+
+        <section className="about-text-block">
+          <h3>Get involved</h3>
+          <p>
+            Have a verbal deception dataset that isn't in the archive yet? Upload your dataset directly (LINK) or reach out to the team to have it considered for inclusion.
           </p>
         </section>
       </div>

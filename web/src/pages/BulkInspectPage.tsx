@@ -21,15 +21,13 @@ const FIELDS: { label: string; key: string }[] = [
   { label: 'Language', key: 'language' },
   { label: 'Statements', key: 'statementCount' },
   { label: 'Ground Truth', key: 'groundTruth' },
-  { label: 'Topic', key: 'topic' },
+  { label: 'Macro topic', key: 'topicStandardized' },
+  { label: 'Sub-topic', key: 'topic' },
   { label: 'Type of Deception', key: 'typeOfDeception' },
   { label: 'Truthful/Deceptive Proportion', key: 'truthfulDeceptiveProportion' },
   { label: 'Source & Research Design', key: 'sourceAndResearchDesign' },
   { label: 'Within/Between Design', key: 'withinOrBetweenDesign' },
   { label: 'Format', key: 'format' },
-  { label: 'Open-source', key: 'openSource' },
-  { label: 'Reuse', key: 'reuse' },
-  { label: 'Dataset Available', key: 'datasetAvailable' },
   { label: 'Documented in Academic Outlet', key: 'documentedInAcademicOutlet' },
 ]
 
@@ -48,11 +46,14 @@ export function BulkInspectPage() {
   const INITIAL_ROWS = 10
   const TABLE_CAP = 250
   const [expandedCsv, setExpandedCsv] = useState(false)
+  const [dataVersion, setDataVersion] = useState<'standardized' | 'original'>('standardized')
+  const [originalDownloadNotice, setOriginalDownloadNotice] = useState('')
   const [citationStyle, setCitationStyle] = useState<CitationStyleId>('apa')
   const [citationPreview, setCitationPreview] = useState('')
   const [citationPreviewError, setCitationPreviewError] = useState('')
   const [citationPreviewLoading, setCitationPreviewLoading] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
+  const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
   const selectedDatasetIds = useMemo(() => datasets.map((dataset) => dataset.id), [datasets])
   const selectedDatasetKey = selectedDatasetIds.join(',')
 
@@ -85,11 +86,28 @@ export function BulkInspectPage() {
     a.click()
   }
 
+  const bulkDownloadOriginal = () => {
+    setOriginalDownloadNotice('Original dataset files are not yet available.')
+  }
+
+  const bulkDownloadSelected = () => {
+    if (dataVersion === 'standardized') {
+      bulkDownload()
+      return
+    }
+    bulkDownloadOriginal()
+  }
+
   const visiblePreviewRows = expandedCsv
     ? Math.min(allCsvRows.length, TABLE_CAP)
     : Math.min(allCsvRows.length, INITIAL_ROWS)
 
   const downloadSingleDataset = (datasetId: string) => {
+    if (dataVersion === 'original') {
+      setOriginalDownloadNotice('Original dataset files are not yet available.')
+      return
+    }
+
     const preview = csvPreviewsByDatasetId[datasetId]
     if (!preview) return
     const url = `${apiBaseUrl}/api/download-dataset-csv/${encodeURIComponent(datasetId)}`
@@ -181,11 +199,30 @@ export function BulkInspectPage() {
     )
   }
 
+  const issueSubject = encodeURIComponent(
+    `Deception Archive issue: Bulk inspect (${datasets.length} dataset${datasets.length !== 1 ? 's' : ''})`,
+  )
+  const issueBody = encodeURIComponent(
+    [
+      'Dear Deception Archive Team,',
+      '',
+      'I would like to report a mistake or issue I encountered.',
+      '',
+      `Context: Bulk inspect (${datasets.length} dataset${datasets.length !== 1 ? 's' : ''})`,
+      `Dataset IDs: ${selectedDatasetIds.join(', ')}`,
+      '',
+      'Issue details:',
+      '',
+      '',
+    ].join('\n'),
+  )
+  const issueMailto = `mailto:${issueRecipients}?subject=${issueSubject}&body=${issueBody}`
+
   return (
-    <section className="panel">
-      <div className="bulk-inspect-header">
+    <section className="panel about-page">
+      <header className="about-hero bulk-inspect-header">
         <div>
-          <p className="eyebrow">Bulk Inspect</p>
+          <p className="eyebrow"></p>
           <h2>Comparing {datasets.length} dataset{datasets.length !== 1 ? 's' : ''}</h2>
         </div>
         <div className="bulk-inspect-actions">
@@ -193,7 +230,7 @@ export function BulkInspectPage() {
             Back to datasets
           </Link>
         </div>
-      </div>
+      </header>
 
       <div className="citation-export-card" aria-label="Bulk citation export">
         <div>
@@ -254,22 +291,33 @@ export function BulkInspectPage() {
       </div>
 
       <div className="bulk-separate-downloads" aria-label="Download selected CSV files separately">
-        <p className="bulk-separate-downloads-title">Download selected CSVs separately</p>
+        <p className="bulk-separate-downloads-title">
+          {dataVersion === 'standardized'
+            ? 'Download selected standardized CSVs separately'
+            : 'Download selected original CSVs separately'}
+        </p>
         <div className="bulk-separate-downloads-list">
           {datasets.map((d) => {
             const hasCsv = Boolean(csvPreviewsByDatasetId[d.id])
+            const canDownload = dataVersion === 'standardized' && hasCsv
             return (
               <button
                 key={d.id}
                 type="button"
                 className="csv-toggle-btn"
                 onClick={() => downloadSingleDataset(d.id)}
-                disabled={!hasCsv}
-                title={hasCsv ? `Download ${d.name}` : `No CSV available for ${d.name}`}
+                disabled={!canDownload}
+                title={canDownload
+                  ? `Download ${d.name}`
+                  : dataVersion === 'original'
+                    ? `Original CSV not yet available for ${d.name}`
+                    : `No CSV available for ${d.name}`}
               >
-                {hasCsv
-                  ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
-                  : `${d.name} (no CSV)`}
+                {dataVersion === 'standardized'
+                  ? (hasCsv
+                    ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
+                    : `${d.name} (no CSV)`)
+                  : `${d.name} (original not yet available)`}
               </button>
             )
           })}
@@ -298,6 +346,10 @@ export function BulkInspectPage() {
                     ? d.yearRange
                     : (d.metadata as unknown as Record<string, unknown>)[key]
 
+                  if (key === 'topicStandardized') {
+                    val = d.metadata.topicStandardized ?? d.metadata.topic
+                  }
+
                   if (key === 'truthfulDeceptiveProportion' && typeof val === 'string') {
                     val = formatProportion(val)
                   }
@@ -319,40 +371,69 @@ export function BulkInspectPage() {
       <div className="csv-preview-block">
         <div className="csv-preview-header-row">
           <h3>Combined CSV preview</h3>
-          <button type="button" className="csv-toggle-btn" onClick={bulkDownload}>
-            {datasets.length === 1
-              ? `Download CSV (${totalRows.toLocaleString()} rows)`
-              : `Download combined CSV (${totalRows.toLocaleString()} rows)`}
+          <select
+            id="bulk-data-version"
+            className="citation-export-select"
+            aria-label="Choose dataset format"
+            value={dataVersion}
+            onChange={(event) => {
+              setDataVersion(event.target.value as 'standardized' | 'original')
+              setOriginalDownloadNotice('')
+            }}
+          >
+            <option value="standardized">Standardized</option>
+            <option value="original">Original</option>
+          </select>
+          <button type="button" className="csv-toggle-btn" onClick={bulkDownloadSelected}>
+            {dataVersion === 'standardized'
+              ? (datasets.length === 1
+                ? `Download standardized CSV (${totalRows.toLocaleString()} rows)`
+                : `Download combined standardized CSV (${totalRows.toLocaleString()} rows)`)
+              : (datasets.length === 1 ? 'Download original CSV' : 'Download combined original CSV')}
           </button>
-          {allCsvRows.length > INITIAL_ROWS && (
+          {dataVersion === 'standardized' && allCsvRows.length > INITIAL_ROWS && (
             <button type="button" className="csv-toggle-btn" onClick={() => setExpandedCsv((v) => !v)}>
               {expandedCsv ? `Show first ${INITIAL_ROWS} rows` : `Preview up to ${TABLE_CAP} rows`}
             </button>
           )}
         </div>
-        <p className="csv-preview-caption">
-          Showing {visiblePreviewRows.toLocaleString()} of {totalRows.toLocaleString()} rows
-          {' across '}{datasets.length} dataset{datasets.length !== 1 ? 's' : ''}
-          {' · preview capped at '}{TABLE_CAP}; download contains all rows
-        </p>
-        <div className="csv-preview-table-wrap">
-          <table className="csv-preview-table">
-            <thead>
-              <tr>
-                {csvHeaders.map((h, index) => <th key={`${h}-${index}`}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {(expandedCsv ? allCsvRows.slice(0, TABLE_CAP) : allCsvRows.slice(0, INITIAL_ROWS)).map((row, i) => (
-                <tr key={i}>
-                  {row.map((cell, j) => (
-                    <td key={j}>{cell || '-'}</td>
+        {originalDownloadNotice ? (
+          <p className="download-placeholder-note" role="status">{originalDownloadNotice}</p>
+        ) : null}
+        {dataVersion === 'original' ? (
+          <p className="csv-preview-caption">Original dataset preview is not yet available.</p>
+        ) : (
+          <>
+            <p className="csv-preview-caption">
+              Showing {visiblePreviewRows.toLocaleString()} of {totalRows.toLocaleString()} rows
+              {' across '}{datasets.length} dataset{datasets.length !== 1 ? 's' : ''}
+              {' · preview capped at '}{TABLE_CAP}; download contains all rows
+            </p>
+            <div className="csv-preview-table-wrap">
+              <table className="csv-preview-table">
+                <thead>
+                  <tr>
+                    {csvHeaders.map((h, index) => <th key={`${h}-${index}`}>{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(expandedCsv ? allCsvRows.slice(0, TABLE_CAP) : allCsvRows.slice(0, INITIAL_ROWS)).map((row, i) => (
+                    <tr key={i}>
+                      {row.map((cell, j) => (
+                        <td key={j}>{cell || '-'}</td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="report-issue-box" aria-label="Report bulk inspect issue">
+        <p>If you encounter any mistakes or issues, please email us here.</p>
+        <a href={issueMailto} className="text-link">Click to email</a>
       </div>
     </section>
   )

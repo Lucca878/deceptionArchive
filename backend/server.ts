@@ -8,54 +8,55 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'csv-parse/sync'
 import { parse as createCsvParser } from 'csv-parse'
 import { stringify } from 'csv-stringify/sync'
-import { archiveData } from '../web/src/data/archiveData'
+import { LOL_TERMS } from '../web/src/data/lolColumns'
+import type { DatasetRecord, TermEntry } from '../web/src/types/dataset'
 import { EXPLICIT_CITATION_CATALOG } from './citationCatalogData.ts'
 
 const PREVIEW_ROW_CAP = 250
 
 const DATASET_SOURCES: Record<string, string> = {
-  'apd-2025': 'APD_2025_id.csv',
-  'atsface-2023': 'ATSFACE_2023_id.csv',
-  'blc-2019': 'BLC_2019_id.csv',
-  'blt-c-2016': 'BLT_C_2016_id.csv',
-  'bluff-2020': 'BLUFF_2020_id.csv',
-  'ccd-2014': 'CCD_2014_id.csv',
-  'csc-2005': 'CSC_2005_id.csv',
-  'csi-2014': 'CSI_2014_id.csv',
-  'decop-en-2020': 'DECOP_EN_2020_id.csv',
-  'decop-it-2020': 'DECOP_IT_2020_id.csv',
-  'decour-2012': 'DECOUR_2012_id.csv',
-  'defabel-2024': 'DEFABEL_2024_id.csv',
-  'defabel-2025': 'DEFABEL_2025_id.csv',
-  'derev-2014': 'DEREV_2014_id.csv',
-  'derev-2020': 'DEREV_2020_id.csv',
-  'difraud-2024': 'DIFRAUD_2024_id.csv',
+  'apd-2025': 'APD_2025.csv',
+  'atsface-2023': 'ATSFACE_2023.csv',
+  'blc-2019': 'BLC_2019.csv',
+  'blt-c-2016': 'BLT_C_2016.csv',
+  'bluff-2020': 'BLUFF_2020.csv',
+  'ccd-2014': 'CCD_2014.csv',
+  'csc-2005': 'CSC_2005.csv',
+  'csi-2014': 'CSI_2014.csv',
+  'decop-en-2020': 'DECOP_EN_2020.csv',
+  'decop-it-2020': 'DECOP_IT_2020.csv',
+  'decour-2012': 'DECOUR_2012.csv',
+  'defabel-2024': 'DEFABEL_2024.csv',
+  'defabel-2025': 'DEFABEL_2025.csv',
+  'derev-2014': 'DEREV_2014.csv',
+  'derev-2020': 'DEREV_2020.csv',
+  'difraud-2024': 'DIFRAUD_2024.csv',
   'diplomacy-2020': 'DIPLOMACY_2020.csv',
-  'hip-2022': 'HIP_2022_id.csv',
-  'int-2021': 'INT_2021_id.csv',
+  'hip-2022': 'HIP_2022.csv',
+  'int-2021': 'INT_2021.csv',
   'kleinberg-2018': 'KLEINBERG_2018.csv',
-  'legaleye-2025': 'LEGALEYE_2025_id.csv',
-  'li-2014': 'LI_2014_id.csv',
-  'loconte-2025': 'LOCONTE_2025_id.csv',
-  'mafiagame-2022': 'MAFIA/Copia di MAFIAGAME_2022_clean.csv',
-  'mafiascum-2019': 'MAFIA/Copia di MAFIASCUM_2019_clean.csv',
-  'spyridis-2024': 'MAFIA/SPYRIDIS_2024_id.csv',
-  'meajor-2025': 'MeAJOR_2025_id.csv',
-  'monaro-2022': 'MONARO_2022_id.csv',
-  'mu3d-2019': 'MU3D_2019_id.csv',
-  'open-2015': 'OPEN_2015_id.csv',
-  'ott-2011': 'OTT_2011_id.csv',
-  'ott-2013': 'OTT_2013_id.csv',
-  'patra-2025': 'PATRA_2025_id.csv',
-  'pops-2017': 'POPS_2017_id.csv',
-  'real-d-2015': 'REAL_D_2015_id.csv',
-  'real-t-2015': 'REAL_T_2015_id.csv',
-  'ru-frdc-2022': 'RU_FRDC_2022_id.csv',
-  'sarzynska-2023': 'SARZYNSKA_2023_id.csv',
-  'sbu-2020': 'SBU_2020_id.csv',
-  'sharma-2025': 'SHARMA_2025_id.csv',
-  'soldner-2022': 'SOLDNER_2022_id.csv',
-  'trec-2005': 'TREC_2005_id.csv',
+  'legaleye-2025': 'LEGALEYE_2025.csv',
+  'li-2014': 'LI_2014.csv',
+  'loconte-2025': 'LOCONTE_2025.csv',
+  'mafiagame-2022': 'MAFIAGAME_2022.csv',
+  'mafiascum-2019': 'MAFIASCUM_2019.csv',
+  'spyridis-2024': 'SPYRIDIS_2024.csv',
+  'meajor-2025': 'MEAJOR_2025.csv',
+  'monaro-2022': 'MONARO_2022.csv',
+  'mu3d-2019': 'MU3D_2019.csv',
+  'open-2015': 'OPEN_2015.csv',
+  'ott-2011': 'OTT_2011.csv',
+  'ott-2013': 'OTT_2013.csv',
+  'patra-2025': 'PATRA_2025.csv',
+  'pops-2017': 'POPS_2017.csv',
+  'real-d-2015': 'REAL_D_2015.csv',
+  'real-t-2015': 'REAL_T_2015.csv',
+  'ru-frdc-2022': 'RU_FRDC_2022.csv',
+  'sarzynska-2023': 'SARZYNSKA_2023.csv',
+  'sbu-2020': 'SBU_2020.csv',
+  'sharma-2025': 'SHARMA_2025.csv',
+  'soldner-2022': 'SOLDNER_2022.csv',
+  'trec-2005': 'TREC_2005.csv',
 }
 
 interface CsvPreview {
@@ -66,8 +67,8 @@ interface CsvPreview {
 }
 
 interface ArchivePayload {
-  datasets: typeof archiveData.datasets
-  terms: typeof archiveData.terms
+  datasets: DatasetRecord[]
+  terms: TermEntry[]
   csvPreviewsByDatasetId: Record<string, CsvPreview>
 }
 
@@ -204,6 +205,205 @@ const defaultDatasetCsvRoot = path.join(webDataRoot, 'LOL', 'Dataset_id')
 const datasetCsvRoot = process.env.LOL_DATASET_DIR?.trim()
   ? path.resolve(process.env.LOL_DATASET_DIR)
   : defaultDatasetCsvRoot
+const metadataCsvCandidates = [
+  path.join(webDataRoot, 'LOL', 'Deception_archive_metadata.csv'),
+  path.join(webDataRoot, 'LOL', 'Deception archive_metadata.csv'),
+]
+
+interface MetadataCsvRow {
+  Dataset?: string
+  Dataset_id?: string
+  Key?: string
+  'Within or Between design'?: string
+  Reuse?: string
+  'Open-source'?: string
+  'Ground truth'?: string
+  'Dataset documented in academic outlet'?: string
+  'No of statements or utterances'?: string
+  'Truthful / deceptive proportion'?: string
+  Format?: string
+  Language?: string
+  Topic?: string
+  'Topic standardized'?: string
+  'Type of deception'?: string
+  Source?: string
+  'Dataset available'?: string
+  Note?: string
+}
+
+function normalizeValue(value: unknown): string {
+  if (typeof value !== 'string') return ''
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function csvFileCodeFromSourcePath(relPath: string): string {
+  const base = path.basename(relPath, path.extname(relPath)).toUpperCase()
+  return base
+    .replace(/^COPIA DI /, '')
+    .replace(/\s+/g, '_')
+    .replace(/-+/g, '_')
+    .replace(/_ID$/, '')
+    .replace(/_CLEAN$/, '')
+}
+
+function buildDatasetIdByMetadataCode(): Record<string, string> {
+  const byCode: Record<string, string> = {}
+
+  for (const [datasetId, relPath] of Object.entries(DATASET_SOURCES)) {
+    const code = csvFileCodeFromSourcePath(relPath)
+    byCode[code] = datasetId
+  }
+
+  return byCode
+}
+
+async function loadMetadataRows(): Promise<Record<string, MetadataCsvRow>> {
+  let csvPath: string | null = null
+
+  for (const candidate of metadataCsvCandidates) {
+    try {
+      await readFile(candidate)
+      csvPath = candidate
+      break
+    } catch {
+      // Try next candidate path.
+    }
+  }
+
+  if (!csvPath) {
+    console.warn('No metadata CSV found; continuing with archiveData.ts metadata only')
+    return {}
+  }
+
+  const raw = await readFile(csvPath, 'utf-8')
+  const rows = parse(raw, {
+    columns: true,
+    skip_empty_lines: true,
+    bom: true,
+    relax_quotes: true,
+  }) as MetadataCsvRow[]
+
+  const datasetIdByCode = buildDatasetIdByMetadataCode()
+  const mapped: Record<string, MetadataCsvRow> = {}
+  const unknownCodes = new Set<string>()
+  const duplicateDatasetIds = new Set<string>()
+  const seenCodesByDatasetId = new Map<string, string>()
+
+  for (const row of rows) {
+    const code = normalizeValue(row.Dataset_id).toUpperCase().replace(/\s+/g, '_')
+    if (!code) continue
+    const datasetId = datasetIdByCode[code]
+    if (!datasetId) {
+      unknownCodes.add(code)
+      continue
+    }
+
+    const alreadySeenCode = seenCodesByDatasetId.get(datasetId)
+    if (alreadySeenCode && alreadySeenCode !== code) {
+      duplicateDatasetIds.add(datasetId)
+    }
+
+    seenCodesByDatasetId.set(datasetId, code)
+    mapped[datasetId] = row
+  }
+
+  const missingDatasetIds = Object.keys(DATASET_SOURCES)
+    .filter((datasetId) => mapped[datasetId] == null)
+    .sort()
+
+  if (unknownCodes.size > 0) {
+    console.warn(
+      `Metadata Dataset_id values with no DATASET_SOURCES match: ${Array.from(unknownCodes).sort().join(', ')}`,
+    )
+  }
+
+  if (duplicateDatasetIds.size > 0) {
+    console.warn(
+      `Multiple metadata Dataset_id rows mapped to the same dataset id: ${Array.from(duplicateDatasetIds).sort().join(', ')}`,
+    )
+  }
+
+  if (missingDatasetIds.length > 0) {
+    throw new Error(
+      `Metadata CSV is missing rows for dataset IDs: ${missingDatasetIds.join(', ')}`,
+    )
+  }
+
+  console.log(`Loaded ${Object.keys(mapped).length} metadata rows from ${path.basename(csvPath)}`)
+  return mapped
+}
+
+function mergeDatasetMetadata(
+  datasetId: string,
+  statementCount: number,
+  row: MetadataCsvRow,
+): DatasetRecord {
+  const sourceAndResearchDesign = normalizeValue(row.Source)
+  const topic = normalizeValue(row.Topic)
+  const topicStandardized = normalizeValue(row['Topic standardized'])
+  const language = normalizeValue(row.Language)
+  const typeOfDeception = normalizeValue(row['Type of deception'])
+  const groundTruth = normalizeValue(row['Ground truth'])
+  const withinOrBetweenDesign = normalizeValue(row['Within or Between design'])
+  const format = normalizeValue(row.Format)
+  const documentedInAcademicOutlet = normalizeValue(row['Dataset documented in academic outlet'])
+  const truthfulDeceptiveProportion = normalizeValue(row['Truthful / deceptive proportion'])
+  const note = normalizeValue(row.Note)
+  const key = normalizeValue(row.Key)
+  const datasetName = normalizeValue(row.Dataset)
+  const topicTagParts = topic
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+  const tags = Array.from(
+    new Set([
+      ...topicTagParts,
+      typeOfDeception,
+      format,
+      language,
+    ].filter((value) => value.length > 0)),
+  )
+
+  const yearMatch = datasetId.match(/-(\d{4})$/)
+  const yearRange = yearMatch ? yearMatch[1] : ''
+  const descriptionParts = [
+    datasetName,
+    topic ? `Topic: ${topic}.` : '',
+    typeOfDeception ? `Deception type: ${typeOfDeception}.` : '',
+    sourceAndResearchDesign ? `Design/source: ${sourceAndResearchDesign}.` : '',
+  ].filter(Boolean)
+
+  return {
+    id: datasetId,
+    name: datasetName,
+    description: descriptionParts.join(' '),
+    yearRange,
+    tags,
+    metadata: {
+      statementCount,
+      language,
+      topic,
+      topicStandardized: topicStandardized || undefined,
+      sourceAndResearchDesign,
+      experimentalDesign: sourceAndResearchDesign,
+      typeOfDeception,
+      groundTruth,
+      withinOrBetweenDesign,
+      format,
+      documentedInAcademicOutlet,
+      truthfulDeceptiveProportion,
+      note,
+      key,
+      openSource: normalizeValue(row['Open-source']),
+      reuse: normalizeValue(row.Reuse),
+      datasetAvailable: normalizeValue(row['Dataset available']),
+    },
+    originalSource: {
+      label: normalizeValue(row['Dataset available']) || 'Unknown',
+      url: '#',
+    },
+  }
+}
 
 function json(response: import('node:http').ServerResponse, status: number, body: unknown) {
   response.writeHead(status, {
@@ -217,6 +417,15 @@ function normalizeCell(cell: string) {
   return cell.replace(/\r\n/g, ' ').replace(/\r/g, ' ').replace(/\n/g, ' ')
 }
 
+function parseStatementCount(value: unknown): number {
+  const normalized = normalizeValue(value)
+  if (!normalized) return 0
+  const digits = normalized.replace(/[^\d]/g, '')
+  if (!digits) return 0
+  const parsed = Number.parseInt(digits, 10)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
 function parseCsvContent(content: string): string[][] {
   return parse(content, {
     relax_quotes: true,
@@ -226,10 +435,9 @@ function parseCsvContent(content: string): string[][] {
 async function readCsvPreviewRows(
   absolutePath: string,
   cap: number,
-): Promise<{ headers: string[]; rows: string[][]; totalRows: number }> {
+): Promise<{ headers: string[]; rows: string[][] }> {
   return new Promise((resolve, reject) => {
     const rows: string[][] = []
-    let totalRows = 0
     let headers: string[] = []
     let hasHeaders = false
     let resolved = false
@@ -243,7 +451,7 @@ async function readCsvPreviewRows(
     const finish = () => {
       if (!resolved) {
         resolved = true
-        resolve({ headers, rows, totalRows })
+        resolve({ headers, rows })
       }
     }
 
@@ -259,10 +467,13 @@ async function readCsvPreviewRows(
           continue
         }
 
-        totalRows += 1
-
         if (rows.length < cap) {
           rows.push(clean)
+          if (rows.length === cap) {
+            stream.destroy()
+            finish()
+            return
+          }
         }
       }
     })
@@ -282,12 +493,11 @@ async function readCsvPreviewRows(
 
 async function buildCsvPreviewsByDatasetId(): Promise<{
   previewsByDatasetId: Record<string, CsvPreview>
-  statementCountByDatasetId: Record<string, number>
 }> {
   const entries = await Promise.all(
     Object.entries(DATASET_SOURCES).map(async ([datasetId, relPath]) => {
       const absolutePath = path.join(datasetCsvRoot, relPath)
-      const { headers, rows, totalRows } = await readCsvPreviewRows(absolutePath, PREVIEW_ROW_CAP)
+      const { headers, rows } = await readCsvPreviewRows(absolutePath, PREVIEW_ROW_CAP)
 
       const preview: CsvPreview = {
         headers,
@@ -296,45 +506,41 @@ async function buildCsvPreviewsByDatasetId(): Promise<{
         sourcePath: relPath,
       }
 
-      return [datasetId, preview, totalRows] as const
+      return [datasetId, preview] as const
     }),
   )
 
   const previewsByDatasetId: Record<string, CsvPreview> = {}
-  const statementCountByDatasetId: Record<string, number> = {}
 
-  for (const [datasetId, preview, totalRows] of entries) {
+  for (const [datasetId, preview] of entries) {
     previewsByDatasetId[datasetId] = preview
-    statementCountByDatasetId[datasetId] = totalRows
   }
 
   return {
     previewsByDatasetId,
-    statementCountByDatasetId,
   }
 }
 
 async function initializePayload() {
-  const { previewsByDatasetId, statementCountByDatasetId } = await buildCsvPreviewsByDatasetId()
+  const [{ previewsByDatasetId }, metadataRowsByDatasetId] = await Promise.all([
+    buildCsvPreviewsByDatasetId(),
+    loadMetadataRows(),
+  ])
 
-  const datasets = archiveData.datasets.map((dataset) => {
-    const statementCount = statementCountByDatasetId[dataset.id]
-    if (statementCount == null) {
-      return dataset
+  const datasets = Object.entries(DATASET_SOURCES).map(([datasetId]) => {
+    const metadataRow = metadataRowsByDatasetId[datasetId]
+    if (!metadataRow) {
+      throw new Error(`Metadata CSV row missing for dataset id: ${datasetId}`)
     }
 
-    return {
-      ...dataset,
-      metadata: {
-        ...dataset.metadata,
-        statementCount,
-      },
-    }
+    const statementCount = parseStatementCount(metadataRow['No of statements or utterances'])
+
+    return mergeDatasetMetadata(datasetId, statementCount, metadataRow)
   })
 
   payload = {
-    ...archiveData,
     datasets,
+    terms: LOL_TERMS,
     csvPreviewsByDatasetId: previewsByDatasetId,
   }
 }

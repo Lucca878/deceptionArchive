@@ -38,6 +38,14 @@ export function Layout() {
           >
             About Us
           </NavLink>
+          <NavLink
+            to="/contribute"
+            className={({ isActive }) =>
+              isActive ? 'menu-link menu-link-active' : 'menu-link'
+            }
+          >
+            Contribute
+          </NavLink>
         </div>
 
         <div className="window-body">

@@ -71,6 +71,10 @@
           "type": "string",
           "minLength": 2
         },
+        "topicStandardized": {
+          "type": "string",
+          "minLength": 2
+        },
         "experimentalDesign": {
           "type": "string",
           "minLength": 1

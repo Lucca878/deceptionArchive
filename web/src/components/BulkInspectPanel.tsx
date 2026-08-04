@@ -10,12 +10,12 @@ export function BulkInspectPanel({ datasets, onClose }: BulkInspectPanelProps) {
     { label: 'Language', key: 'language' },
     { label: 'Statements', key: 'statementCount' },
     { label: 'Ground Truth', key: 'groundTruth' },
-    { label: 'Topic', key: 'topic' },
+    { label: 'Macro topic', key: 'topicStandardized' },
+    { label: 'Sub-topic', key: 'topic' },
     { label: 'Type of Deception', key: 'typeOfDeception' },
     { label: 'Source & Research Design', key: 'sourceAndResearchDesign' },
     { label: 'Within/Between Design', key: 'withinOrBetweenDesign' },
     { label: 'Format', key: 'format' },
-    { label: 'Open-source', key: 'openSource' },
   ]
 
   return (
@@ -47,8 +47,14 @@ export function BulkInspectPanel({ datasets, onClose }: BulkInspectPanelProps) {
                   <td className="bulk-table-field-col">{label}</td>
                   {datasets.map((d) => (
                     <td key={d.id}>
-                      {d.metadata[key] != null
-                        ? String(d.metadata[key])
+                      {((key === 'topicStandardized'
+                        ? (d.metadata.topicStandardized ?? d.metadata.topic)
+                        : d.metadata[key]) != null)
+                        ? String(
+                          key === 'topicStandardized'
+                            ? (d.metadata.topicStandardized ?? d.metadata.topic)
+                            : d.metadata[key],
+                        )
                         : <span className="bulk-table-empty">—</span>}
                     </td>
                   ))}

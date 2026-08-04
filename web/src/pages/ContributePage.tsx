@@ -33,14 +33,16 @@ export function ContributePage() {
 
     const subject = encodeURIComponent(`Dataset contribution: ${datasetName}`)
     const body = encodeURIComponent(lines.join('\n'))
-    window.location.href = `mailto:l.j.pfruender@tilburguniversity.edu?subject=${subject}&body=${body}`
+    window.location.href = `mailto:l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it?subject=${subject}&body=${body}`
   }
 
   return (
-    <section className="panel">
-      <p className="eyebrow">Contribution Portal</p>
-      <h2>Contribute New Dataset</h2>
-      <p>
+    <section className="panel about-page">
+      <header className="about-hero">
+        <p className="eyebrow"></p>
+        <h2>Contribute New Dataset</h2>
+      </header>
+      <p className="about-lead">
         Share a deception dataset with the archive team. Fill in the details below
         and submit to send us an email with your pre-filled contribution draft. Following, we will review your submission and get back to you for further steps.
       </p>
