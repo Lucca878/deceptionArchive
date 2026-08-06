@@ -389,7 +389,7 @@ export function BulkInspectPage() {
               ? (datasets.length === 1
                 ? `Download standardized CSV (${totalRows.toLocaleString()} rows)`
                 : `Download combined standardized CSV (${totalRows.toLocaleString()} rows)`)
-              : (datasets.length === 1 ? 'Download original CSV' : 'Download combined original CSV')}
+              : (datasets.length === 1 ? 'Download original CSV' : 'Download original CSVs separately')}
           </button>
           {dataVersion === 'standardized' && allCsvRows.length > INITIAL_ROWS && (
             <button type="button" className="csv-toggle-btn" onClick={() => setExpandedCsv((v) => !v)}>

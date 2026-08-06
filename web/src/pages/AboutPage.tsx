@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import cpcmLogo from '../assets/cpcmlogo.png'
 import deceptionArchiveLogo from '../assets/deception-archive-logo.png'
 
@@ -75,7 +76,7 @@ export function AboutPage() {
         <section className="about-text-block">
           <h3>Get involved</h3>
           <p>
-            Have a verbal deception dataset that isn't in the archive yet? Upload your dataset directly (LINK) or reach out to the team to have it considered for inclusion.
+            Have a verbal deception dataset that isn't in the archive yet? Reach out to the team at the <Link to="/contribute">contribute page</Link>.
           </p>
         </section>
       </div>
