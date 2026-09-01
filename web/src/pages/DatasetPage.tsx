@@ -45,15 +45,15 @@ export function DatasetPage() {
   const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
   const metadataRows = dataset
     ? [
-        { label: 'Year Range', value: dataset.yearRange },
+        { label: 'Publication Year', value: dataset.yearRange },
         { label: 'Language', value: dataset.metadata.language },
-        { label: 'Statements', value: dataset.metadata.statementCount.toLocaleString() },
+        { label: 'Number of Statements', value: dataset.metadata.statementCount.toLocaleString() },
         { label: 'Ground Truth', value: dataset.metadata.groundTruth },
         {
-          label: 'Macro topic',
+          label: 'Macro Topic',
           value: dataset.metadata.topicStandardized ?? dataset.metadata.topic,
         },
-        { label: 'Sub-topic', value: dataset.metadata.topic },
+        { label: 'Sub-Topic', value: dataset.metadata.topic },
         { label: 'Type of Deception', value: dataset.metadata.typeOfDeception },
         {
           label: 'Truthful/Deceptive Proportion',
@@ -61,7 +61,7 @@ export function DatasetPage() {
             ? formatProportion(dataset.metadata.truthfulDeceptiveProportion)
             : '',
         },
-        { label: 'Source & Research Design', value: sourceAndResearchDesign },
+        { label: 'Source', value: sourceAndResearchDesign },
         { label: 'Within/Between Design', value: dataset.metadata.withinOrBetweenDesign },
         { label: 'Format', value: dataset.metadata.format },
         {
@@ -380,16 +380,29 @@ export function DatasetPage() {
                 <thead>
                   <tr>
                     {csvPreview.headers.map((header) => (
-                      <th key={header}>{header}</th>
+                      <th
+                        key={header}
+                        className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                      >
+                        {header}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {visibleRows.map((row, rowIndex) => (
                     <tr key={`${dataset.id}-${rowIndex}`}>
-                      {row.map((cell, cellIndex) => (
-                        <td key={`${dataset.id}-${rowIndex}-${cellIndex}`}>{cell || '-'}</td>
-                      ))}
+                      {row.map((cell, cellIndex) => {
+                        const header = csvPreview.headers[cellIndex] ?? ''
+                        return (
+                          <td
+                            key={`${dataset.id}-${rowIndex}-${cellIndex}`}
+                            className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                          >
+                            {cell || '-'}
+                          </td>
+                        )
+                      })}
                     </tr>
                   ))}
                 </tbody>

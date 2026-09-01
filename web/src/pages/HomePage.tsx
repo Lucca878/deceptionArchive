@@ -222,14 +222,14 @@ export function HomePage() {
         />
         <MultiDropdown
           id="filter-macro-topic"
-          label="Macro topic"
+          label="Macro Topic"
           options={macroTopicOptions}
           selected={macroTopics_sel}
           onChange={setMacroTopicsSel}
         />
         <MultiDropdown
           id="filter-sub-topic"
-          label="Sub-topic"
+          label="Sub-Topic"
           options={subTopicOptions}
           selected={subTopics_sel}
           onChange={setSubTopicsSel}

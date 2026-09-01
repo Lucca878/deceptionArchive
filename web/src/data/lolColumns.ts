@@ -47,7 +47,7 @@ export const LOL_TERMS: TermEntry[] = [
       'Notes if there is a paper, proceedings entry, or similar academic source that documents the dataset.',
   },
   {
-    term: 'No of statements or utterances',
+    term: 'Number of Statements',
     definition:
       'Total number of statements or utterances reported for the dataset.',
   },

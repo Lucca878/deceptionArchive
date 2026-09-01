@@ -17,9 +17,9 @@ function formatProportion(value: string) {
 }
 
 const FIELDS: { label: string; key: string }[] = [
-  { label: 'Year Range', key: 'yearRange' },
+  { label: 'Publication Year', key: 'yearRange' },
   { label: 'Language', key: 'language' },
-  { label: 'Statements', key: 'statementCount' },
+  { label: 'Number of Statements', key: 'statementCount' },
   { label: 'Ground Truth', key: 'groundTruth' },
   { label: 'Macro topic', key: 'topicStandardized' },
   { label: 'Sub-topic', key: 'topic' },
@@ -267,7 +267,7 @@ export function BulkInspectPage() {
         </div>
       </header>
 
-      <div className="citation-export-card" aria-label="Bulk citation export">
+      <div className="citation-export-card" aria-label="Bulk dataset citation export">
         <div>
           <h3>Export citations</h3>
           <p className="citation-export-copy">
@@ -332,23 +332,21 @@ export function BulkInspectPage() {
             : 'Download selected original CSVs separately'}
         </p>
         <div className="bulk-separate-downloads-list">
-          {datasets.map((d) => {
-            return (
-              <button
-                key={d.id}
-                type="button"
-                className="csv-toggle-btn"
-                onClick={() => downloadSingleDataset(d.id)}
-                title={dataVersion === 'original'
-                  ? `Original CSV not yet available for ${d.name}`
-                  : `Download ${d.name}`}
-              >
-                {dataVersion === 'standardized'
-                  ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
-                  : `${d.name} (original not yet available)`}
-              </button>
-            )
-          })}
+          {datasets.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              className="csv-toggle-btn"
+              onClick={() => downloadSingleDataset(d.id)}
+              title={dataVersion === 'original'
+                ? `Original CSV not yet available for ${d.name}`
+                : `Download ${d.name}`}
+            >
+              {dataVersion === 'standardized'
+                ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
+                : `${d.name} (original not yet available)`}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -360,7 +358,9 @@ export function BulkInspectPage() {
               <th className="bulk-table-field-col">Field</th>
               {datasets.map((d) => (
                 <th key={d.id}>
-                  <Link to={`/datasets/${d.id}`} className="text-link">{d.name}</Link>
+                  <Link to={`/datasets/${d.id}`} className="text-link">
+                    {d.name}
+                  </Link>
                 </th>
               ))}
             </tr>
@@ -445,15 +445,30 @@ export function BulkInspectPage() {
               <table className="csv-preview-table">
                 <thead>
                   <tr>
-                    {csvHeaders.map((h, index) => <th key={`${h}-${index}`}>{h}</th>)}
+                    {csvHeaders.map((header, index) => (
+                      <th
+                        key={`${header}-${index}`}
+                        className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {(expandedCsv ? allCsvRows.slice(0, TABLE_CAP) : allCsvRows.slice(0, INITIAL_ROWS)).map((row, i) => (
-                    <tr key={i}>
-                      {row.map((cell, j) => (
-                        <td key={j}>{cell || '-'}</td>
-                      ))}
+                  {(expandedCsv ? allCsvRows.slice(0, TABLE_CAP) : allCsvRows.slice(0, INITIAL_ROWS)).map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {row.map((cell, cellIndex) => {
+                        const header = csvHeaders[cellIndex] ?? ''
+                        return (
+                          <td
+                            key={cellIndex}
+                            className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                          >
+                            {cell || '-'}
+                          </td>
+                        )
+                      })}
                     </tr>
                   ))}
                 </tbody>

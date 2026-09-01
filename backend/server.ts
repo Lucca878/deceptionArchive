@@ -503,10 +503,97 @@ function parseStatementCount(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function parseCsvContent(content: string): string[][] {
-  return parse(content, {
-    relax_quotes: true,
-  }) as string[][]
+async function readCsvHeaders(absolutePath: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    let resolved = false
+
+    const parser = createCsvParser({
+      relax_quotes: true,
+      to_line: 1,
+    })
+
+    const stream = createReadStream(absolutePath, { encoding: 'utf-8' })
+
+    const finishWith = (headers: string[]) => {
+      if (!resolved) {
+        resolved = true
+        resolve(headers)
+      }
+    }
+
+    parser.on('readable', () => {
+      const record = parser.read() as string[] | null
+      if (record) {
+        finishWith(record.map((cell) => normalizeCell(String(cell ?? ''))))
+      }
+    })
+
+    parser.on('error', (error) => {
+      if (!resolved) reject(error)
+    })
+
+    stream.on('error', (error) => {
+      if (!resolved) reject(error)
+    })
+
+    stream.on('close', () => {
+      finishWith([])
+    })
+
+    stream.pipe(parser)
+  })
+}
+
+async function streamDatasetRowsToResponse(
+  response: import('node:http').ServerResponse,
+  datasetId: string,
+  csvPath: string,
+  outputHeaders: string[],
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let hasHeaders = false
+    const headerIndex = new Map<string, number>()
+
+    const parser = createCsvParser({
+      relax_quotes: true,
+    })
+
+    const stream = createReadStream(csvPath, { encoding: 'utf-8' })
+
+    parser.on('readable', () => {
+      let record: string[] | null
+      while ((record = parser.read() as string[] | null) !== null) {
+        const clean = record.map((cell) => normalizeCell(String(cell ?? '')))
+
+        if (!hasHeaders) {
+          clean.forEach((header, index) => {
+            headerIndex.set(header, index)
+          })
+          hasHeaders = true
+          continue
+        }
+
+        const mapped = outputHeaders.map((header) => {
+          const idx = headerIndex.get(header)
+          return idx == null ? '' : (clean[idx] ?? '')
+        })
+
+        const outRow = stringify([[datasetId, ...mapped]])
+        if (!response.write(outRow)) {
+          stream.pause()
+          response.once('drain', () => {
+            stream.resume()
+          })
+        }
+      }
+    })
+
+    parser.on('error', (error) => reject(error))
+    stream.on('error', (error) => reject(error))
+    parser.on('end', () => resolve())
+
+    stream.pipe(parser)
+  })
 }
 
 async function readCsvPreviewRows(
@@ -705,57 +792,55 @@ const server = createServer((request, response) => {
       return
     }
 
-    Promise.all(
-      datasetIds.map(async (datasetId) => {
-        const csvPath = getCsvFilePath(datasetId)
-        if (!csvPath) {
-          throw new Error(`Missing CSV source for ${datasetId}`)
-        }
+    const datasetFiles: { datasetId: string; csvPath: string }[] = []
+    for (const datasetId of datasetIds) {
+      const csvPath = getCsvFilePath(datasetId)
+      if (!csvPath) {
+        json(response, 404, { error: `Missing CSV source for ${datasetId}` })
+        return
+      }
+      datasetFiles.push({ datasetId, csvPath })
+    }
 
-        const content = await readFile(csvPath, 'utf-8')
-        const rows = parseCsvContent(content)
+    void (async () => {
+      const allHeaders: string[] = []
+      const seen = new Set<string>()
+      const isDatasetIdHeader = (header: string) => header.trim().toLowerCase() === 'dataset_id'
 
-        const headers = rows[0] ?? []
-        const dataRows = rows.slice(1)
-        return { datasetId, headers, dataRows }
-      }),
-    )
-      .then((datasets) => {
-        const allHeaders: string[] = []
-        const seen = new Set<string>()
-
-        for (const d of datasets) {
-          for (const h of d.headers) {
-            if (!seen.has(h)) {
-              seen.add(h)
-              allHeaders.push(h)
-            }
+      for (const file of datasetFiles) {
+        const headers = await readCsvHeaders(file.csvPath)
+        for (const header of headers) {
+          if (isDatasetIdHeader(header)) {
+            continue
+          }
+          if (!seen.has(header)) {
+            seen.add(header)
+            allHeaders.push(header)
           }
         }
+      }
 
-        const outHeaders = ['dataset_id', ...allHeaders]
-        const outRows: string[][] = [outHeaders]
-
-        for (const d of datasets) {
-          const headerIndex = new Map<string, number>()
-          d.headers.forEach((h, idx) => headerIndex.set(h, idx))
-
-          for (const row of d.dataRows) {
-            const mapped = allHeaders.map((h) => {
-              const idx = headerIndex.get(h)
-              return idx == null ? '' : (row[idx] ?? '')
-            })
-            outRows.push([d.datasetId, ...mapped])
-          }
-        }
-
-        const csv = stringify(outRows)
-        sendCsv(response, `lol-bulk-${datasetIds.join('_').slice(0, 60)}.csv`, csv)
+      response.writeHead(200, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="lol-bulk-${datasetIds.join('_').slice(0, 60)}.csv"`,
+        'Access-Control-Allow-Origin': '*',
       })
-      .catch((error: unknown) => {
-        console.error('Failed to build bulk CSV:', error)
+
+      response.write(stringify([['dataset_id', ...allHeaders]]))
+
+      for (const file of datasetFiles) {
+        await streamDatasetRowsToResponse(response, file.datasetId, file.csvPath, allHeaders)
+      }
+
+      response.end()
+    })().catch((error: unknown) => {
+      console.error('Failed to build bulk CSV:', error)
+      if (!response.headersSent) {
         json(response, 500, { error: 'Failed to build bulk CSV' })
-      })
+      } else {
+        response.destroy(error instanceof Error ? error : undefined)
+      }
+    })
     return
   }
 

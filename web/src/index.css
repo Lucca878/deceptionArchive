@@ -1176,6 +1176,7 @@ a {
   min-width: 640px;
   border-collapse: collapse;
   font-size: 0.79rem;
+  table-layout: fixed;
 }
 
 .bulk-table th,
@@ -1186,6 +1187,14 @@ a {
   padding: 0.34rem 0.5rem;
   text-align: left;
   white-space: nowrap;
+}
+
+.csv-preview-text-col {
+  width: 42%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  vertical-align: top;
 }
 
 .bulk-table th,
