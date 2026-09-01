@@ -1180,16 +1180,24 @@ a {
 }
 
 .bulk-table th,
-.bulk-table td,
-.csv-preview-table th,
-.csv-preview-table td {
+.bulk-table td {
   border: 1px solid var(--border);
   padding: 0.34rem 0.5rem;
   text-align: left;
   white-space: nowrap;
 }
 
-.csv-preview-text-col {
+.csv-preview-table th,
+.csv-preview-table td {
+  border: 1px solid var(--border);
+  padding: 0.34rem 0.5rem;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.csv-preview-table th.csv-preview-text-col,
+.csv-preview-table td.csv-preview-text-col {
   width: 42%;
   white-space: normal;
   overflow-wrap: anywhere;
