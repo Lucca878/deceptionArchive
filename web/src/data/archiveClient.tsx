@@ -1,50 +1,80 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { DatasetRecord, TermEntry } from '../types/dataset'
 
-interface CsvPreview {
+export interface CsvPreview {
   headers: string[]
   fullRows: string[][]
 }
 
-export interface ArchivePayload {
+interface ArchiveSummaryPayload {
   datasets: DatasetRecord[]
   terms: TermEntry[]
-  csvPreviewsByDatasetId: Record<string, CsvPreview>
 }
 
 interface ArchiveDataState {
-  data: ArchivePayload | null
+  summaryData: ArchiveSummaryPayload | null
   loading: boolean
   error: string | null
 }
 
 const ArchiveDataContext = createContext<ArchiveDataState | undefined>(undefined)
 
-async function loadArchivePayload(): Promise<ArchivePayload> {
-  const apiBaseUrl = import.meta.env.DEV
+function getApiBaseUrl() {
+  return import.meta.env.DEV
     ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
     : ''
+}
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+
+  if (response.ok) {
+    return (await response.json()) as T
+  }
+
+  throw new Error(`Failed to load archive data (${response.status})`)
+}
+
+async function loadArchiveSummary(): Promise<ArchiveSummaryPayload> {
   try {
-    const response = await fetch(`${apiBaseUrl}/api/archive-payload`, {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-
-    if (response.ok) {
-      return (await response.json()) as ArchivePayload
-    }
-
-    throw new Error(`Failed to load archive data (${response.status})`)
+    return await fetchJson<ArchiveSummaryPayload>(`${getApiBaseUrl()}/api/archive-summary`)
   } catch {
     throw new Error('Failed to load archive data')
   }
 }
 
+export async function loadDatasetPreview(datasetId: string): Promise<CsvPreview> {
+  try {
+    return await fetchJson<CsvPreview>(
+      `${getApiBaseUrl()}/api/dataset-preview/${encodeURIComponent(datasetId)}`,
+    )
+  } catch {
+    throw new Error('Failed to load dataset preview')
+  }
+}
+
+export async function loadBulkDatasetPreviews(
+  datasetIds: string[],
+): Promise<Record<string, CsvPreview>> {
+  try {
+    const ids = datasetIds.map(encodeURIComponent).join(',')
+    const payload = await fetchJson<{ csvPreviewsByDatasetId: Record<string, CsvPreview> }>(
+      `${getApiBaseUrl()}/api/bulk-dataset-previews?ids=${ids}`,
+    )
+
+    return payload.csvPreviewsByDatasetId
+  } catch {
+    throw new Error('Failed to load dataset previews')
+  }
+}
+
 export function ArchiveDataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ArchiveDataState>({
-    data: null,
+    summaryData: null,
     loading: true,
     error: null,
   })
@@ -52,16 +82,16 @@ export function ArchiveDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
-    loadArchivePayload()
+    loadArchiveSummary()
       .then((data) => {
         if (!cancelled) {
-          setState({ data, loading: false, error: null })
+          setState({ summaryData: data, loading: false, error: null })
         }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
           setState({
-            data: null,
+            summaryData: null,
             loading: false,
             error: error instanceof Error ? error.message : 'Unable to load archive data',
           })

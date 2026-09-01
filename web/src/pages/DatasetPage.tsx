@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useArchiveData } from '../data/archiveClient'
+import { loadDatasetPreview, useArchiveData, type CsvPreview } from '../data/archiveClient'
 import {
   CITATION_STYLE_OPTIONS,
   downloadCitationExport,
@@ -17,16 +17,18 @@ function formatProportion(value: string) {
 
 export function DatasetPage() {
   const { datasetId } = useParams()
-  const { data } = useArchiveData()
+  const { summaryData } = useArchiveData()
   const apiBaseUrl = import.meta.env.DEV
     ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
     : ''
-  const dataset = data?.datasets.find((item) => item.id === datasetId)
+  const dataset = summaryData?.datasets.find((item) => item.id === datasetId)
   const sourceAndResearchDesign =
     dataset?.metadata.sourceAndResearchDesign ??
     dataset?.metadata.experimentalDesign ??
     'Not specified'
-  const csvPreview = dataset ? data?.csvPreviewsByDatasetId[dataset.id] : undefined
+  const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null)
+  const [csvPreviewLoading, setCsvPreviewLoading] = useState(false)
+  const [csvPreviewError, setCsvPreviewError] = useState('')
   const totalRows = dataset?.metadata.statementCount ?? 0
   const availableRows = csvPreview?.fullRows.length ?? 0
   const INITIAL_ROWS = 10
@@ -74,7 +76,44 @@ export function DatasetPage() {
       : csvPreview.fullRows.slice(0, INITIAL_ROWS)
     : []
 
-  if (!data) {
+  useEffect(() => {
+    if (!dataset?.id) {
+      setCsvPreview(null)
+      setCsvPreviewLoading(false)
+      setCsvPreviewError('')
+      return
+    }
+
+    let cancelled = false
+
+    setCsvPreview(null)
+    setCsvPreviewLoading(true)
+    setCsvPreviewError('')
+
+    void loadDatasetPreview(dataset.id)
+      .then((preview) => {
+        if (!cancelled) {
+          setCsvPreview(preview)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setCsvPreview(null)
+          setCsvPreviewError(error instanceof Error ? error.message : 'Unable to load CSV preview.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCsvPreviewLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [dataset?.id])
+
+  if (!summaryData) {
     return (
       <section className="panel">
         <p className="eyebrow">Loading</p>
@@ -300,13 +339,11 @@ export function DatasetPage() {
             <option value="standardized">Standardized</option>
             <option value="original">Original</option>
           </select>
-          {csvPreview && (
-            <button type="button" className="csv-toggle-btn" onClick={downloadSelectedCsv}>
-              {dataVersion === 'standardized'
-                ? `Download standardized CSV (${totalRows.toLocaleString()} rows)`
-                : 'Download original CSV'}
-            </button>
-          )}
+          <button type="button" className="csv-toggle-btn" onClick={downloadSelectedCsv}>
+            {dataVersion === 'standardized'
+              ? `Download standardized CSV (${totalRows.toLocaleString()} rows)`
+              : 'Download original CSV'}
+          </button>
           {dataVersion === 'standardized' && csvPreview && availableRows > INITIAL_ROWS && (
             <button
               type="button"
@@ -324,6 +361,10 @@ export function DatasetPage() {
         ) : null}
         {dataVersion === 'original' ? (
           <p className="csv-preview-caption">Original dataset preview is not yet available.</p>
+        ) : csvPreviewError ? (
+          <p className="csv-preview-caption">{csvPreviewError}</p>
+        ) : csvPreviewLoading ? (
+          <p className="csv-preview-caption">Loading CSV preview…</p>
         ) : csvPreview ? (
           <>
             <p className="csv-preview-caption">

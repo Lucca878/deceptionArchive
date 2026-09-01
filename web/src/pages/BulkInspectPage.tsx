@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useArchiveData } from '../data/archiveClient'
+import { loadBulkDatasetPreviews, useArchiveData, type CsvPreview } from '../data/archiveClient'
 import {
   CITATION_STYLE_OPTIONS,
   downloadCitationExport,
@@ -33,21 +33,23 @@ const FIELDS: { label: string; key: string }[] = [
 
 export function BulkInspectPage() {
   const [params] = useSearchParams()
-  const { data } = useArchiveData()
+  const { summaryData } = useArchiveData()
   const apiBaseUrl = import.meta.env.DEV
     ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
     : ''
   const ids = (params.get('ids') ?? '').split(',').filter(Boolean)
   const datasets = ids
-    .map((id) => data?.datasets.find((d) => d.id === id))
+    .map((id) => summaryData?.datasets.find((d) => d.id === id))
     .filter(Boolean) as DatasetRecord[]
 
-  const csvPreviewsByDatasetId = data?.csvPreviewsByDatasetId ?? {}
   const INITIAL_ROWS = 10
   const TABLE_CAP = 250
   const [expandedCsv, setExpandedCsv] = useState(false)
   const [dataVersion, setDataVersion] = useState<'standardized' | 'original'>('standardized')
   const [originalDownloadNotice, setOriginalDownloadNotice] = useState('')
+  const [csvPreviewsByDatasetId, setCsvPreviewsByDatasetId] = useState<Record<string, CsvPreview>>({})
+  const [csvPreviewLoading, setCsvPreviewLoading] = useState(false)
+  const [csvPreviewError, setCsvPreviewError] = useState('')
   const [citationStyle, setCitationStyle] = useState<CitationStyleId>('apa')
   const [citationPreview, setCitationPreview] = useState('')
   const [citationPreviewError, setCitationPreviewError] = useState('')
@@ -56,6 +58,42 @@ export function BulkInspectPage() {
   const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
   const selectedDatasetIds = useMemo(() => datasets.map((dataset) => dataset.id), [datasets])
   const selectedDatasetKey = selectedDatasetIds.join(',')
+
+  useEffect(() => {
+    if (dataVersion === 'original' || selectedDatasetIds.length === 0) {
+      setCsvPreviewsByDatasetId({})
+      setCsvPreviewLoading(false)
+      setCsvPreviewError('')
+      return
+    }
+
+    let cancelled = false
+
+    setCsvPreviewLoading(true)
+    setCsvPreviewError('')
+
+    void loadBulkDatasetPreviews(selectedDatasetIds)
+      .then((previewsByDatasetId) => {
+        if (!cancelled) {
+          setCsvPreviewsByDatasetId(previewsByDatasetId)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setCsvPreviewsByDatasetId({})
+          setCsvPreviewError(error instanceof Error ? error.message : 'Unable to load CSV previews.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCsvPreviewLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDatasetKey, dataVersion])
 
   // Build the combined CSV rows in memory for display and download
   const allHeaders = Array.from(
@@ -107,9 +145,6 @@ export function BulkInspectPage() {
       setOriginalDownloadNotice('Original dataset files are not yet available.')
       return
     }
-
-    const preview = csvPreviewsByDatasetId[datasetId]
-    if (!preview) return
     const url = `${apiBaseUrl}/api/download-dataset-csv/${encodeURIComponent(datasetId)}`
     const a = document.createElement('a')
     a.href = url
@@ -181,7 +216,7 @@ export function BulkInspectPage() {
   }
 
   if (!datasets.length) {
-    if (!data) {
+    if (!summaryData) {
       return (
         <section className="panel">
           <p className="eyebrow">Loading</p>
@@ -298,25 +333,18 @@ export function BulkInspectPage() {
         </p>
         <div className="bulk-separate-downloads-list">
           {datasets.map((d) => {
-            const hasCsv = Boolean(csvPreviewsByDatasetId[d.id])
-            const canDownload = dataVersion === 'standardized' && hasCsv
             return (
               <button
                 key={d.id}
                 type="button"
                 className="csv-toggle-btn"
                 onClick={() => downloadSingleDataset(d.id)}
-                disabled={!canDownload}
-                title={canDownload
-                  ? `Download ${d.name}`
-                  : dataVersion === 'original'
-                    ? `Original CSV not yet available for ${d.name}`
-                    : `No CSV available for ${d.name}`}
+                title={dataVersion === 'original'
+                  ? `Original CSV not yet available for ${d.name}`
+                  : `Download ${d.name}`}
               >
                 {dataVersion === 'standardized'
-                  ? (hasCsv
-                    ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
-                    : `${d.name} (no CSV)`)
+                  ? `Download ${d.name} (${d.metadata.statementCount.toLocaleString()} rows)`
                   : `${d.name} (original not yet available)`}
               </button>
             )
@@ -402,6 +430,10 @@ export function BulkInspectPage() {
         ) : null}
         {dataVersion === 'original' ? (
           <p className="csv-preview-caption">Original dataset preview is not yet available.</p>
+        ) : csvPreviewError ? (
+          <p className="csv-preview-caption">{csvPreviewError}</p>
+        ) : csvPreviewLoading ? (
+          <p className="csv-preview-caption">Loading CSV previews…</p>
         ) : (
           <>
             <p className="csv-preview-caption">

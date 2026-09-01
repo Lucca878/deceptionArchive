@@ -20,7 +20,7 @@ function App() {
               <section className="panel">
                 <p className="eyebrow">Loading</p>
                 <h2>Archive data is loading</h2>
-                <p>Fetching datasets and CSV previews from the backend.</p>
+                <p>Fetching dataset summaries from the backend.</p>
               </section>
             </main>
           </div>

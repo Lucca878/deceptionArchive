@@ -5,7 +5,6 @@ import { readFile } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { brotliCompressSync, gzipSync, constants as zlibConstants } from 'node:zlib'
 import { parse } from 'csv-parse/sync'
 import { parse as createCsvParser } from 'csv-parse'
 import { stringify } from 'csv-stringify/sync'
@@ -60,23 +59,14 @@ const DATASET_SOURCES: Record<string, string> = {
   'trec-2005': 'TREC_2005.csv',
 }
 
-interface CsvPreview {
+interface DatasetCsvPreviewResponse {
   headers: string[]
-  previewRows: string[][]
   fullRows: string[][]
-  sourcePath: string
 }
 
-interface ArchivePayload {
+interface ArchiveSummaryPayload {
   datasets: DatasetRecord[]
   terms: TermEntry[]
-  csvPreviewsByDatasetId: Record<string, CsvPreview>
-}
-
-interface EncodedArchivePayload {
-  raw: Buffer
-  gzip: Buffer
-  brotli: Buffer
 }
 
 const CITATION_STYLES = [
@@ -202,10 +192,10 @@ function buildExportFileName(datasetIds: string[], style: CitationStyleConfig) {
   return `lol-citations-${datasetLabel}-${style.id}.${style.downloadExtension}`
 }
 
-let payload: ArchivePayload | null = null
-let encodedPayload: EncodedArchivePayload | null = null
-let payloadInitError: string | null = null
-let payloadInitInProgress = false
+let summaryPayload: ArchiveSummaryPayload | null = null
+let summaryInitError: string | null = null
+let summaryInitInProgress = false
+let metadataRowsPromise: Promise<Record<string, MetadataCsvRow>> | null = null
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const webDataRoot = path.join(projectRoot, 'web', 'src', 'data')
@@ -344,6 +334,14 @@ async function loadMetadataRows(): Promise<Record<string, MetadataCsvRow>> {
   return mapped
 }
 
+function getMetadataRows(): Promise<Record<string, MetadataCsvRow>> {
+  if (!metadataRowsPromise) {
+    metadataRowsPromise = loadMetadataRows()
+  }
+
+  return metadataRowsPromise
+}
+
 function mergeDatasetMetadata(
   datasetId: string,
   statementCount: number,
@@ -424,54 +422,72 @@ function json(response: import('node:http').ServerResponse, status: number, body
   response.end(JSON.stringify(body))
 }
 
-function encodeArchivePayload(payloadObject: ArchivePayload): EncodedArchivePayload {
-  const raw = Buffer.from(JSON.stringify(payloadObject), 'utf-8')
-  const gzip = gzipSync(raw)
-  const brotli = brotliCompressSync(raw, {
-    params: {
-      [zlibConstants.BROTLI_PARAM_QUALITY]: 5,
-    },
-  })
+async function loadDatasetPreview(datasetId: string): Promise<DatasetCsvPreviewResponse> {
+  const csvPath = getCsvFilePath(datasetId)
 
-  return { raw, gzip, brotli }
+  if (!csvPath) {
+    throw new Error(`Dataset CSV not found for ${datasetId}`)
+  }
+
+  const { headers, rows } = await readCsvPreviewRows(csvPath, PREVIEW_ROW_CAP)
+
+  return {
+    headers,
+    fullRows: rows,
+  }
 }
 
-function sendCompressedArchivePayload(
-  request: import('node:http').IncomingMessage,
-  response: import('node:http').ServerResponse,
-) {
-  if (!encodedPayload) {
-    json(response, 503, { error: 'Archive payload is initializing' })
-    return
+async function loadBulkDatasetPreviews(datasetIds: string[]): Promise<Record<string, DatasetCsvPreviewResponse>> {
+  const entries = await Promise.all(
+    datasetIds.map(async (datasetId) => {
+      const preview = await loadDatasetPreview(datasetId)
+      return [datasetId, preview] as const
+    }),
+  )
+
+  const previewsByDatasetId: Record<string, DatasetCsvPreviewResponse> = {}
+
+  for (const [datasetId, preview] of entries) {
+    previewsByDatasetId[datasetId] = preview
   }
 
-  const acceptEncoding = request.headers['accept-encoding'] ?? ''
-  const headerValue = Array.isArray(acceptEncoding) ? acceptEncoding.join(',') : acceptEncoding
+  return previewsByDatasetId
+}
 
-  let body = encodedPayload.raw
-  let contentEncoding: 'br' | 'gzip' | null = null
+async function initializeSummaryPayload() {
+  const metadataRowsByDatasetId = await getMetadataRows()
 
-  if (headerValue.includes('br')) {
-    body = encodedPayload.brotli
-    contentEncoding = 'br'
-  } else if (headerValue.includes('gzip')) {
-    body = encodedPayload.gzip
-    contentEncoding = 'gzip'
+  const datasets = Object.entries(DATASET_SOURCES).map(([datasetId]) => {
+    const metadataRow = metadataRowsByDatasetId[datasetId]
+    if (!metadataRow) {
+      throw new Error(`Metadata CSV row missing for dataset id: ${datasetId}`)
+    }
+
+    const statementCount = parseStatementCount(metadataRow['No of statements or utterances'])
+
+    return mergeDatasetMetadata(datasetId, statementCount, metadataRow)
+  })
+
+  summaryPayload = {
+    datasets,
+    terms: LOL_TERMS,
   }
+}
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-    'Vary': 'Accept-Encoding',
-    'Content-Length': String(body.length),
+async function ensureSummaryPayloadInitialized() {
+  if (summaryPayload || summaryInitInProgress) return
+
+  summaryInitInProgress = true
+  try {
+    await initializeSummaryPayload()
+    summaryInitError = null
+  } catch (error) {
+    summaryPayload = null
+    summaryInitError = error instanceof Error ? error.message : String(error)
+    console.error('Failed to initialize archive summary:', error)
+  } finally {
+    summaryInitInProgress = false
   }
-
-  if (contentEncoding) {
-    headers['Content-Encoding'] = contentEncoding
-  }
-
-  response.writeHead(200, headers)
-  response.end(body)
 }
 
 function normalizeCell(cell: string) {
@@ -552,80 +568,6 @@ async function readCsvPreviewRows(
   })
 }
 
-async function buildCsvPreviewsByDatasetId(): Promise<{
-  previewsByDatasetId: Record<string, CsvPreview>
-}> {
-  const entries = await Promise.all(
-    Object.entries(DATASET_SOURCES).map(async ([datasetId, relPath]) => {
-      const absolutePath = path.join(datasetCsvRoot, relPath)
-      const { headers, rows } = await readCsvPreviewRows(absolutePath, PREVIEW_ROW_CAP)
-
-      const preview: CsvPreview = {
-        headers,
-        previewRows: rows,
-        fullRows: rows,
-        sourcePath: relPath,
-      }
-
-      return [datasetId, preview] as const
-    }),
-  )
-
-  const previewsByDatasetId: Record<string, CsvPreview> = {}
-
-  for (const [datasetId, preview] of entries) {
-    previewsByDatasetId[datasetId] = preview
-  }
-
-  return {
-    previewsByDatasetId,
-  }
-}
-
-async function initializePayload() {
-  const [{ previewsByDatasetId }, metadataRowsByDatasetId] = await Promise.all([
-    buildCsvPreviewsByDatasetId(),
-    loadMetadataRows(),
-  ])
-
-  const datasets = Object.entries(DATASET_SOURCES).map(([datasetId]) => {
-    const metadataRow = metadataRowsByDatasetId[datasetId]
-    if (!metadataRow) {
-      throw new Error(`Metadata CSV row missing for dataset id: ${datasetId}`)
-    }
-
-    const statementCount = parseStatementCount(metadataRow['No of statements or utterances'])
-
-    return mergeDatasetMetadata(datasetId, statementCount, metadataRow)
-  })
-
-  payload = {
-    datasets,
-    terms: LOL_TERMS,
-    csvPreviewsByDatasetId: previewsByDatasetId,
-  }
-
-  encodedPayload = encodeArchivePayload(payload)
-}
-
-async function ensurePayloadInitialized() {
-  if (payload || payloadInitInProgress) return
-
-  payloadInitInProgress = true
-  try {
-    await initializePayload()
-    payloadInitError = null
-    console.log(`Archive payload initialized (CSV root: ${datasetCsvRoot})`)
-  } catch (error) {
-    payload = null
-    encodedPayload = null
-    payloadInitError = error instanceof Error ? error.message : String(error)
-    console.error('Failed to initialize archive payload:', error)
-  } finally {
-    payloadInitInProgress = false
-  }
-}
-
 function getCsvFilePath(datasetId: string): string | null {
   const sourcePath = DATASET_SOURCES[datasetId]
   if (!sourcePath) return null
@@ -654,33 +596,76 @@ const server = createServer((request, response) => {
   }
 
   if (url.pathname === '/health' || url.pathname === '/api/health') {
-    if (!payload) {
+    if (!summaryPayload) {
       json(response, 503, {
         ok: false,
-        status: payloadInitInProgress ? 'initializing' : 'not-ready',
-        error: payloadInitError ?? 'Archive payload is initializing',
+        status: summaryInitInProgress ? 'initializing' : 'not-ready',
+        error: summaryInitError ?? 'Archive summary is initializing',
       })
       return
     }
 
     json(response, 200, {
       ok: true,
-      datasets: payload.datasets.length,
-      terms: payload.terms.length,
-      csvPreviews: Object.keys(payload.csvPreviewsByDatasetId).length,
+      datasets: summaryPayload.datasets.length,
+      terms: summaryPayload.terms.length,
     })
     return
   }
 
-  if (!payload) {
-    json(response, 503, {
-      error: payloadInitError ?? 'Archive payload is initializing',
-    })
+  if (url.pathname === '/api/archive-summary') {
+    void ensureSummaryPayloadInitialized()
+      .then(() => {
+        if (!summaryPayload) {
+          json(response, 503, {
+            error: summaryInitError ?? 'Archive summary is initializing',
+          })
+          return
+        }
+
+        json(response, 200, summaryPayload)
+      })
+      .catch((error: unknown) => {
+        json(response, 500, {
+          error: error instanceof Error ? error.message : 'Failed to load archive summary',
+        })
+      })
     return
   }
 
-  if (url.pathname === '/api/archive-payload') {
-    sendCompressedArchivePayload(request, response)
+  if (url.pathname.startsWith('/api/dataset-preview/')) {
+    const datasetId = decodeURIComponent(url.pathname.replace('/api/dataset-preview/', ''))
+
+    void loadDatasetPreview(datasetId)
+      .then((preview) => {
+        json(response, 200, preview)
+      })
+      .catch((error: unknown) => {
+        json(response, 404, {
+          error: error instanceof Error ? error.message : 'Dataset CSV not found',
+        })
+      })
+    return
+  }
+
+  if (url.pathname === '/api/bulk-dataset-previews') {
+    const idsRaw = url.searchParams.get('ids') ?? ''
+    const datasetIds = idsRaw.split(',').map((value) => value.trim()).filter(Boolean)
+
+    if (datasetIds.length === 0) {
+      json(response, 400, { error: 'No dataset ids provided' })
+      return
+    }
+
+    void loadBulkDatasetPreviews(datasetIds)
+      .then((csvPreviewsByDatasetId) => {
+        json(response, 200, { csvPreviewsByDatasetId })
+      })
+      .catch((error: unknown) => {
+        json(response, 404, {
+          error: error instanceof Error ? error.message : 'Failed to load dataset previews',
+        })
+      })
     return
   }
 
@@ -809,12 +794,12 @@ const port = Number(process.env.PORT ?? 3000)
 
 server.listen(port, '0.0.0.0', () => {
   console.log(`Archive backend listening on ${port}`)
-  void ensurePayloadInitialized()
+  void ensureSummaryPayloadInitialized()
 
   // Keep retrying in case required data files arrive after container start.
   setInterval(() => {
-    if (!payload) {
-      void ensurePayloadInitialized()
+    if (!summaryPayload) {
+      void ensureSummaryPayloadInitialized()
     }
   }, 30_000)
   })

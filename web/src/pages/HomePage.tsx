@@ -14,8 +14,8 @@ export function HomePage() {
   const [subTopics_sel, setSubTopicsSel] = useState<string[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const navigate = useNavigate()
-  const { data } = useArchiveData()
-  const datasets = data?.datasets ?? []
+  const { summaryData } = useArchiveData()
+  const datasets = summaryData?.datasets ?? []
   const apiBaseUrl = import.meta.env.DEV
     ? (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000')
     : ''
@@ -163,7 +163,7 @@ export function HomePage() {
     subTopics_sel.length > 0
   const allVisibleSelected = filtered.length > 0 && filtered.every((d) => selectedIds.has(d.id))
 
-  if (!data) {
+  if (!summaryData) {
     return (
       <section className="panel">
         <p className="eyebrow">Loading</p>

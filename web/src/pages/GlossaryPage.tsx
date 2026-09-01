@@ -1,9 +1,9 @@
 import { useArchiveData } from '../data/archiveClient'
 
 export function GlossaryPage() {
-  const { data } = useArchiveData()
+  const { summaryData } = useArchiveData()
 
-  if (!data) {
+  if (!summaryData) {
     return (
       <section className="panel">
         <p className="eyebrow">Loading</p>
@@ -12,7 +12,7 @@ export function GlossaryPage() {
     )
   }
 
-  const { terms } = data
+  const { terms } = summaryData
 
   return (
     <section className="panel about-page">

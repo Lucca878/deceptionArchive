@@ -3,14 +3,15 @@
 This repo has two moving parts:
 
 - `web/` is the archive frontend.
-- `backend/` is the small JSON API that serves the archive payload in production.
+- `backend/` is the small JSON API that serves archive summaries and CSV previews in production.
 
 The live archive domain is `deception-archive.net`. The old study stays on the server at `/var/www/study` for rollback.
 
 ## URL Map
 
 - `https://deception-archive.net/` serves the archive frontend from `/var/www/archive`
-- `https://deception-archive.net/api/archive-payload` serves the archive payload JSON
+- `https://deception-archive.net/api/archive-summary` serves the dataset summary JSON
+- `https://deception-archive.net/api/dataset-preview/:datasetId` serves one dataset preview
 - `https://deception-archive.net/api/health` checks backend container health through nginx
 
 ## Local Development
@@ -35,7 +36,8 @@ Local backend checks:
 
 ```bash
 curl http://127.0.0.1:3000/health
-curl http://127.0.0.1:3000/api/archive-payload | head
+curl http://127.0.0.1:3000/api/archive-summary | head
+curl http://127.0.0.1:3000/api/dataset-preview/apd-2025 | head
 ```
 
 ### 3) Frontend build
@@ -49,7 +51,8 @@ npm run build
 
 In production, the browser does not import the big dataset files directly.
 
-- The frontend loads the archive payload from `/api/archive-payload`.
+- The frontend loads the archive summary from `/api/archive-summary`.
+- Dataset and bulk preview pages fetch CSV previews on demand.
 - The backend container reads the TypeScript data files and returns JSON.
 - The frontend still uses direct imports in local development so you can work without starting the backend.
 
@@ -128,7 +131,8 @@ Then verify the API is healthy and returning data:
 
 ```bash
 curl -s https://deception-archive.net/api/health
-curl -s https://deception-archive.net/api/archive-payload | head
+curl -s https://deception-archive.net/api/archive-summary | head
+curl -s https://deception-archive.net/api/dataset-preview/apd-2025 | head
 ```
 
 ## GitHub Workflow
@@ -148,6 +152,16 @@ git push
 If you only changed backend code, still run the frontend build once because the repo contains shared data modules.
 
 ## Hetzner Deploy Flow
+
+### One-command deploy
+
+From your local machine, run:
+
+```bash
+cd /Users/luccapfruender/Desktop/deceptionArchive && sh deploy-hetzner.sh
+```
+
+That script pulls the latest commit on the server, rebuilds the backend container, rebuilds and uploads the frontend, reloads nginx, and verifies the live site.
 
 ### Step 1: Pull the pushed commit on the server
 
@@ -191,7 +205,8 @@ systemctl reload nginx
 ```bash
 curl -I https://deception-archive.net/
 curl -s https://deception-archive.net/api/health
-curl -s https://deception-archive.net/api/archive-payload | head
+curl -s https://deception-archive.net/api/archive-summary | head
+curl -s https://deception-archive.net/api/dataset-preview/apd-2025 | head
 ```
 
 ## Nginx Layout
@@ -238,11 +253,18 @@ If the site loads but datasets do not appear, check API endpoints first:
 
 ```bash
 curl -i https://deception-archive.net/api/health
-curl -i https://deception-archive.net/api/archive-payload | head
+curl -i https://deception-archive.net/api/archive-summary | head
 ```
 
 - If `/api/*` returns HTML instead of JSON, nginx routing is wrong (the `/api/` proxy is not pointing to `127.0.0.1:3000`).
 - If `/api/health` returns `503` with `Metadata CSV row missing for dataset id ...`, the metadata CSV on server is out of sync with dataset files.
+
+If you want a quicker sanity check on the content routes, use:
+
+```bash
+curl -i https://deception-archive.net/api/archive-summary | head
+curl -i https://deception-archive.net/api/dataset-preview/apd-2025 | head
+```
 
 For metadata mismatch errors, re-sync the entire LOL folder, then restart backend:
 
