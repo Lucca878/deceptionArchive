@@ -1180,7 +1180,7 @@ a {
 
 .csv-preview-table {
   width: max-content;
-  min-width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   font-size: 0.79rem;
 }
@@ -1204,7 +1204,8 @@ a {
 
 .csv-preview-table th.csv-preview-text-col,
 .csv-preview-table td.csv-preview-text-col {
-  width: 42%;
+  width: 24rem;
+  max-width: 24rem;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;

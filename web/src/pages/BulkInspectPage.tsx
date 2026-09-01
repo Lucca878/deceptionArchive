@@ -58,6 +58,7 @@ export function BulkInspectPage() {
   const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
   const selectedDatasetIds = useMemo(() => datasets.map((dataset) => dataset.id), [datasets])
   const selectedDatasetKey = selectedDatasetIds.join(',')
+  const isTextLikeHeader = (header: string) => header.trim().toLowerCase().includes('text')
 
   useEffect(() => {
     if (dataVersion === 'original' || selectedDatasetIds.length === 0) {
@@ -448,7 +449,7 @@ export function BulkInspectPage() {
                     {csvHeaders.map((header, index) => (
                       <th
                         key={`${header}-${index}`}
-                        className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                        className={isTextLikeHeader(header) ? 'csv-preview-text-col' : undefined}
                       >
                         {header}
                       </th>
@@ -463,7 +464,7 @@ export function BulkInspectPage() {
                         return (
                           <td
                             key={cellIndex}
-                            className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                            className={isTextLikeHeader(header) ? 'csv-preview-text-col' : undefined}
                           >
                             {cell || '-'}
                           </td>

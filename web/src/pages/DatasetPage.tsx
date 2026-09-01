@@ -43,6 +43,7 @@ export function DatasetPage() {
   const [copyStatus, setCopyStatus] = useState('')
   const citationPreviewRows = Math.min(10, Math.max(3, citationPreview.split('\n').length))
   const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
+  const isTextLikeHeader = (header: string) => header.trim().toLowerCase().includes('text')
   const metadataRows = dataset
     ? [
         { label: 'Publication Year', value: dataset.yearRange },
@@ -382,7 +383,7 @@ export function DatasetPage() {
                     {csvPreview.headers.map((header) => (
                       <th
                         key={header}
-                        className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                        className={isTextLikeHeader(header) ? 'csv-preview-text-col' : undefined}
                       >
                         {header}
                       </th>
@@ -397,7 +398,7 @@ export function DatasetPage() {
                         return (
                           <td
                             key={`${dataset.id}-${rowIndex}-${cellIndex}`}
-                            className={header.trim().toLowerCase() === 'text' ? 'csv-preview-text-col' : undefined}
+                            className={isTextLikeHeader(header) ? 'csv-preview-text-col' : undefined}
                           >
                             {cell || '-'}
                           </td>
