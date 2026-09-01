@@ -1170,13 +1170,19 @@ a {
   max-height: 520px;
 }
 
-.bulk-table,
-.csv-preview-table {
+.bulk-table {
   width: 100%;
   min-width: 640px;
   border-collapse: collapse;
   font-size: 0.79rem;
   table-layout: fixed;
+}
+
+.csv-preview-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.79rem;
 }
 
 .bulk-table th,
