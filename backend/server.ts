@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { brotliCompressSync, gzipSync, constants as zlibConstants } from 'node:zlib'
 import { parse } from 'csv-parse/sync'
 import { parse as createCsvParser } from 'csv-parse'
 import { stringify } from 'csv-stringify/sync'
@@ -70,6 +71,12 @@ interface ArchivePayload {
   datasets: DatasetRecord[]
   terms: TermEntry[]
   csvPreviewsByDatasetId: Record<string, CsvPreview>
+}
+
+interface EncodedArchivePayload {
+  raw: Buffer
+  gzip: Buffer
+  brotli: Buffer
 }
 
 const CITATION_STYLES = [
@@ -196,6 +203,7 @@ function buildExportFileName(datasetIds: string[], style: CitationStyleConfig) {
 }
 
 let payload: ArchivePayload | null = null
+let encodedPayload: EncodedArchivePayload | null = null
 let payloadInitError: string | null = null
 let payloadInitInProgress = false
 
@@ -416,6 +424,56 @@ function json(response: import('node:http').ServerResponse, status: number, body
   response.end(JSON.stringify(body))
 }
 
+function encodeArchivePayload(payloadObject: ArchivePayload): EncodedArchivePayload {
+  const raw = Buffer.from(JSON.stringify(payloadObject), 'utf-8')
+  const gzip = gzipSync(raw)
+  const brotli = brotliCompressSync(raw, {
+    params: {
+      [zlibConstants.BROTLI_PARAM_QUALITY]: 5,
+    },
+  })
+
+  return { raw, gzip, brotli }
+}
+
+function sendCompressedArchivePayload(
+  request: import('node:http').IncomingMessage,
+  response: import('node:http').ServerResponse,
+) {
+  if (!encodedPayload) {
+    json(response, 503, { error: 'Archive payload is initializing' })
+    return
+  }
+
+  const acceptEncoding = request.headers['accept-encoding'] ?? ''
+  const headerValue = Array.isArray(acceptEncoding) ? acceptEncoding.join(',') : acceptEncoding
+
+  let body = encodedPayload.raw
+  let contentEncoding: 'br' | 'gzip' | null = null
+
+  if (headerValue.includes('br')) {
+    body = encodedPayload.brotli
+    contentEncoding = 'br'
+  } else if (headerValue.includes('gzip')) {
+    body = encodedPayload.gzip
+    contentEncoding = 'gzip'
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+    'Vary': 'Accept-Encoding',
+    'Content-Length': String(body.length),
+  }
+
+  if (contentEncoding) {
+    headers['Content-Encoding'] = contentEncoding
+  }
+
+  response.writeHead(200, headers)
+  response.end(body)
+}
+
 function normalizeCell(cell: string) {
   return cell.replace(/\r\n/g, ' ').replace(/\r/g, ' ').replace(/\n/g, ' ')
 }
@@ -546,6 +604,8 @@ async function initializePayload() {
     terms: LOL_TERMS,
     csvPreviewsByDatasetId: previewsByDatasetId,
   }
+
+  encodedPayload = encodeArchivePayload(payload)
 }
 
 async function ensurePayloadInitialized() {
@@ -558,6 +618,7 @@ async function ensurePayloadInitialized() {
     console.log(`Archive payload initialized (CSV root: ${datasetCsvRoot})`)
   } catch (error) {
     payload = null
+    encodedPayload = null
     payloadInitError = error instanceof Error ? error.message : String(error)
     console.error('Failed to initialize archive payload:', error)
   } finally {
@@ -619,7 +680,7 @@ const server = createServer((request, response) => {
   }
 
   if (url.pathname === '/api/archive-payload') {
-    json(response, 200, payload)
+    sendCompressedArchivePayload(request, response)
     return
   }
 
