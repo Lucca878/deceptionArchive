@@ -1,8 +1,6 @@
-/** Capitalize the first letter of every word, lowercase the rest. */
-export function toTitleCase(str: string | null | undefined): string {
+/** Capitalize only the first letter of the string, lowercase the rest. */
+export function toSentenceCase(str: string | null | undefined): string {
   if (!str) return ''
-  return str
-    .trim()
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  const trimmed = str.trim().toLowerCase()
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
 }

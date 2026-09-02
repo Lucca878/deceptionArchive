@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { DatasetRecord } from '../types/dataset'
-import { toTitleCase } from '../utils/text'
+import { toSentenceCase } from '../utils/text'
 
 interface DatasetCardProps {
   dataset: DatasetRecord
@@ -44,7 +44,7 @@ export function DatasetCard({ dataset, selected = false, onToggleSelect }: Datas
       <div className="tags">
         {filterChips.map((chip) => (
           <span key={chip.key} className="tag" title={`${chip.label}: ${chip.value}`}>
-            {toTitleCase(chip.value)}
+            {toSentenceCase(chip.value)}
           </span>
         ))}
       </div>

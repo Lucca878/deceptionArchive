@@ -9,7 +9,7 @@ import {
   type CitationStyleId,
 } from '../data/citationExports'
 import type { DatasetRecord } from '../types/dataset'
-import { toTitleCase } from '../utils/text'
+import { toSentenceCase } from '../utils/text'
 
 function formatProportion(value: string) {
   const n = Number(value)
@@ -398,7 +398,7 @@ export function BulkInspectPage() {
                   }
 
                   if (TITLE_CASE_FIELD_KEYS.has(key) && typeof val === 'string') {
-                    val = toTitleCase(val)
+                    val = toSentenceCase(val)
                   }
 
                   return (

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { DatasetCard } from '../components/DatasetCard'
 import { MultiDropdown } from '../components/MultiDropdown'
 import { useArchiveData } from '../data/archiveClient'
-import { toTitleCase } from '../utils/text'
+import { toSentenceCase } from '../utils/text'
 
 export function HomePage() {
   const [query, setQuery] = useState('')
@@ -56,7 +56,7 @@ export function HomePage() {
     const seen = new Map<string, string>()
     for (const d of datasets) {
       const v = d.metadata.language?.trim()
-      if (v) seen.set(norm(v), toTitleCase(v))
+      if (v) seen.set(norm(v), toSentenceCase(v))
     }
     return Array.from(seen.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
@@ -68,7 +68,7 @@ export function HomePage() {
     for (const d of datasets) {
       for (const raw of (d.metadata.typeOfDeception ?? '').split(/[,/;]/)) {
         const v = raw.trim()
-        if (v) seen.set(norm(v), toTitleCase(v))
+        if (v) seen.set(norm(v), toSentenceCase(v))
       }
     }
     return Array.from(seen.entries())
@@ -80,7 +80,7 @@ export function HomePage() {
     const seen = new Map<string, string>()
     for (const d of datasets) {
       const v = d.metadata.groundTruth?.trim()
-      if (v) seen.set(norm(v), toTitleCase(v))
+      if (v) seen.set(norm(v), toSentenceCase(v))
     }
     return Array.from(seen.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
@@ -91,7 +91,7 @@ export function HomePage() {
     const seen = new Map<string, string>()
     for (const d of datasets) {
       const v = (d.metadata.topicStandardized ?? d.metadata.topic)?.trim()
-      if (v) seen.set(normCategory(v), toTitleCase(v))
+      if (v) seen.set(normCategory(v), toSentenceCase(v))
     }
     return Array.from(seen.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
@@ -102,7 +102,7 @@ export function HomePage() {
     const seen = new Map<string, string>()
     for (const d of datasets) {
       const v = d.metadata.topic?.trim()
-      if (v) seen.set(normCategory(v), toTitleCase(v))
+      if (v) seen.set(normCategory(v), toSentenceCase(v))
     }
     return Array.from(seen.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))

@@ -778,7 +778,7 @@ a {
 
 .dataset-card {
   display: block;
-  min-height: 340px;
+  min-height: 325px;
   perspective: 1000px;
   color: inherit;
   text-decoration: none;
@@ -800,7 +800,7 @@ a {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 340px;
+  min-height: 325px;
   transform-style: preserve-3d;
   transition: transform 420ms ease;
 }
