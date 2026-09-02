@@ -1,5 +1,6 @@
 /** Capitalize the first letter of every word, lowercase the rest. */
-export function toTitleCase(str: string): string {
+export function toTitleCase(str: string | null | undefined): string {
+  if (!str) return ''
   return str
     .trim()
     .toLowerCase()

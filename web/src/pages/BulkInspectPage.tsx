@@ -9,12 +9,26 @@ import {
   type CitationStyleId,
 } from '../data/citationExports'
 import type { DatasetRecord } from '../types/dataset'
+import { toTitleCase } from '../utils/text'
 
 function formatProportion(value: string) {
   const n = Number(value)
   if (!Number.isFinite(n)) return value
   return n.toFixed(2)
 }
+
+// Fields that hold free-text labels rather than years/numbers and should be title-cased for display.
+const TITLE_CASE_FIELD_KEYS = new Set([
+  'language',
+  'groundTruth',
+  'topicStandardized',
+  'topic',
+  'typeOfDeception',
+  'sourceAndResearchDesign',
+  'withinOrBetweenDesign',
+  'format',
+  'documentedInAcademicOutlet',
+])
 
 const FIELDS: { label: string; key: string }[] = [
   { label: 'Publication Year', key: 'yearRange' },
@@ -381,6 +395,10 @@ export function BulkInspectPage() {
 
                   if (key === 'truthfulDeceptiveProportion' && typeof val === 'string') {
                     val = formatProportion(val)
+                  }
+
+                  if (TITLE_CASE_FIELD_KEYS.has(key) && typeof val === 'string') {
+                    val = toTitleCase(val)
                   }
 
                   return (
