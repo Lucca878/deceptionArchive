@@ -33,9 +33,9 @@ export function DatasetCard({ dataset, selected = false, onToggleSelect }: Datas
         <h3>{dataset.name}</h3>
       </div>
       <ul className="meta-list">
-        <li>Number of Statements: {dataset.metadata.statementCount.toLocaleString()}</li>
+        <li>Number of statements: {dataset.metadata.statementCount.toLocaleString()}</li>
         <li>
-          Truthful/Deceptive: {dataset.metadata.truthfulDeceptiveProportion
+          Truthful/deceptive: {dataset.metadata.truthfulDeceptiveProportion
             ? formatProportion(dataset.metadata.truthfulDeceptiveProportion)
             : '—'}
         </li>
