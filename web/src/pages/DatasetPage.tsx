@@ -47,27 +47,27 @@ export function DatasetPage() {
   const isTextLikeHeader = (header: string) => header.trim().toLowerCase().includes('text')
   const metadataRows = dataset
     ? [
-        { label: 'Publication Year', value: dataset.yearRange },
+        { label: 'Publication year', value: dataset.yearRange },
         { label: 'Language', value: toSentenceCase(dataset.metadata.language) },
-        { label: 'Number of Statements', value: dataset.metadata.statementCount.toLocaleString() },
-        { label: 'Ground Truth', value: toSentenceCase(dataset.metadata.groundTruth) },
+        { label: 'Number of statements', value: dataset.metadata.statementCount.toLocaleString() },
+        { label: 'Ground truth', value: toSentenceCase(dataset.metadata.groundTruth) },
         {
-          label: 'Macro Topic',
+          label: 'Macro topic',
           value: toSentenceCase(dataset.metadata.topicStandardized ?? dataset.metadata.topic),
         },
-        { label: 'Sub-Topic', value: toSentenceCase(dataset.metadata.topic) },
-        { label: 'Type of Deception', value: toSentenceCase(dataset.metadata.typeOfDeception) },
+        { label: 'Sub-topic', value: toSentenceCase(dataset.metadata.topic) },
+        { label: 'Type of deception', value: toSentenceCase(dataset.metadata.typeOfDeception) },
         {
-          label: 'Truthful/Deceptive Proportion',
+          label: 'Truthful/deceptive proportion',
           value: dataset.metadata.truthfulDeceptiveProportion
             ? formatProportion(dataset.metadata.truthfulDeceptiveProportion)
             : '',
         },
         { label: 'Source', value: toSentenceCase(sourceAndResearchDesign) },
-        { label: 'Within/Between Design', value: toSentenceCase(dataset.metadata.withinOrBetweenDesign) },
+        { label: 'Within/between design', value: toSentenceCase(dataset.metadata.withinOrBetweenDesign) },
         { label: 'Format', value: toSentenceCase(dataset.metadata.format) },
         {
-          label: 'Documented in Academic Outlet',
+          label: 'Documented in academic outlet',
           value: toSentenceCase(dataset.metadata.documentedInAcademicOutlet),
         },
       ]

@@ -37,22 +37,22 @@ export const LOL_TERMS: TermEntry[] = [
     definition: 'Internal key attached to the dataset entry.',
   },
   {
-    term: 'Within or Between Design',
+    term: 'Within or between design',
     definition:
       'Whether truthful and deceptive conditions are compared within the same participant or between different participant groups.',
   },
   {
-    term: 'Dataset Documented In Academic Outlet',
+    term: 'Dataset documented in academic outlet',
     definition:
       'Notes if there is a paper, proceedings entry, or similar academic source that documents the dataset.',
   },
   {
-    term: 'Number of Statements',
+    term: 'Number of statements',
     definition:
       'Total number of statements or utterances reported for the dataset.',
   },
   {
-    term: 'Truthful / Deceptive Proportion',
+    term: 'Truthful / deceptive proportion',
     definition:
       'Class balance between truthful and deceptive statements, typically expressed as a ratio or percentage.',
   },
@@ -74,7 +74,7 @@ export const LOL_TERMS: TermEntry[] = [
     definition: 'Dataset-specific topical focus as reported in the source metadata.',
   },
   {
-    term: 'Type of Deception',
+    term: 'Type of deception',
     definition:
       'Primary deception type of the corpus, such as fabrication, embedded lies, or minimization.',
   },

@@ -208,28 +208,28 @@ export function HomePage() {
         />
         <MultiDropdown
           id="filter-type"
-          label="Type of Deception"
+          label="Type of deception"
           options={deceptionTypes}
           selected={deceptionTypes_sel}
           onChange={setDeceptionTypesSel}
         />
         <MultiDropdown
           id="filter-ground-truth"
-          label="Ground Truth"
+          label="Ground truth"
           options={groundTruthOptions}
           selected={groundTruth_sel}
           onChange={setGroundTruthSel}
         />
         <MultiDropdown
           id="filter-macro-topic"
-          label="Macro Topic"
+          label="Macro topic"
           options={macroTopicOptions}
           selected={macroTopics_sel}
           onChange={setMacroTopicsSel}
         />
         <MultiDropdown
           id="filter-sub-topic"
-          label="Sub-Topic"
+          label="Sub-topic"
           options={subTopicOptions}
           selected={subTopics_sel}
           onChange={setSubTopicsSel}

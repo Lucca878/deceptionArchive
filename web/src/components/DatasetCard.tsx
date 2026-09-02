@@ -21,7 +21,7 @@ export function DatasetCard({ dataset, selected = false, onToggleSelect }: Datas
   const filterChips = [
     { key: 'language', label: 'Language', value: dataset.metadata.language },
     { key: 'type', label: 'Type', value: dataset.metadata.typeOfDeception ?? '' },
-    { key: 'ground-truth', label: 'Ground Truth', value: dataset.metadata.groundTruth ?? '' },
+    { key: 'ground-truth', label: 'Ground truth', value: dataset.metadata.groundTruth ?? '' },
     { key: 'macro-topic', label: 'Macro topic', value: macroTopic ?? '' },
     { key: 'sub-topic', label: 'Sub-topic', value: subTopic ?? '' },
   ].filter((chip) => chip.value.trim().length > 0)

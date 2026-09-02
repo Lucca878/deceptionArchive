@@ -31,18 +31,18 @@ const TITLE_CASE_FIELD_KEYS = new Set([
 ])
 
 const FIELDS: { label: string; key: string }[] = [
-  { label: 'Publication Year', key: 'yearRange' },
+  { label: 'Publication year', key: 'yearRange' },
   { label: 'Language', key: 'language' },
-  { label: 'Number of Statements', key: 'statementCount' },
-  { label: 'Ground Truth', key: 'groundTruth' },
+  { label: 'Number of statements', key: 'statementCount' },
+  { label: 'Ground truth', key: 'groundTruth' },
   { label: 'Macro topic', key: 'topicStandardized' },
   { label: 'Sub-topic', key: 'topic' },
-  { label: 'Type of Deception', key: 'typeOfDeception' },
-  { label: 'Truthful/Deceptive Proportion', key: 'truthfulDeceptiveProportion' },
-  { label: 'Source & Research Design', key: 'sourceAndResearchDesign' },
-  { label: 'Within/Between Design', key: 'withinOrBetweenDesign' },
+  { label: 'Type of deception', key: 'typeOfDeception' },
+  { label: 'Truthful/deceptive proportion', key: 'truthfulDeceptiveProportion' },
+  { label: 'Source & research design', key: 'sourceAndResearchDesign' },
+  { label: 'Within/between design', key: 'withinOrBetweenDesign' },
   { label: 'Format', key: 'format' },
-  { label: 'Documented in Academic Outlet', key: 'documentedInAcademicOutlet' },
+  { label: 'Documented in academic outlet', key: 'documentedInAcademicOutlet' },
 ]
 
 export function BulkInspectPage() {
