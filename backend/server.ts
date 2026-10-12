@@ -49,7 +49,6 @@ const DATASET_SOURCES: Record<string, string> = {
   'ott-2013': 'OTT_2013.csv',
   'patra-2025': 'PATRA_2025.csv',
   'pops-2017': 'POPS_2017.csv',
-  'real-d-2015': 'REAL_D_2015.csv',
   'real-t-2015': 'REAL_T_2015.csv',
   'ru-frdc-2022': 'RU_FRDC_2022.csv',
   'sarzynska-2023': 'SARZYNSKA_2023.csv',
