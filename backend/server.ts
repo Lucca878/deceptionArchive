@@ -58,6 +58,50 @@ const DATASET_SOURCES: Record<string, string> = {
   'trec-2005': 'TREC_2005.csv',
 }
 
+const ORIGINAL_SOURCES: Record<string, string> = {
+  'apd-2025': 'APD_2025_original.xlsx',
+  'atsface-2023': 'ATSFACE_2023_original.zip',
+  'blc-2019': 'BLC_2019_original.zip',
+  'blt-c-2016': 'BLT_C_2016_original.tar',
+  'bluff-2020': 'BLUFF_2020_original.csv',
+  'ccd-2014': 'CCD_2014_original.tar',
+  'csc-2005': 'CSC_2005_original.tar',
+  'csi-2014': 'CSI_2014_original.zip',
+  'decop-en-2020': 'DECOP_EN_2020_original.xlsx',
+  'decop-it-2020': 'DECOP_IT_2020_original.xlsx',
+  'decour-2012': 'DECOUR_2012_original.zip',
+  'defabel-2024': 'DEFABEL_2024_original.zip',
+  'defabel-2025': 'DEFABEL_2025_original.zip',
+  'derev-2014': 'DEREV_2014_original.zip',
+  'derev-2020': 'DEREV_2020_original.zip',
+  'difraud-2024': 'DIFRAUD_2024_original.zip',
+  'diplomacy-2020': 'DIPLOMACY_2020_original.zip',
+  'hip-2022': 'HIP_2022_original.zip',
+  'int-2021': 'INT_2021_original.zip',
+  'kleinberg-2018': 'KLEINBERG_2018_original.csv',
+  'legaleye-2025': 'LEGALEYE_2025_original.xlsx',
+  'li-2014': 'LI_2014_original.zip',
+  'loconte-2025': 'LOCONTE_2025_original.zip',
+  'mafiagame-2022': 'MAFIAGAME_2022_original.zip',
+  'mafiascum-2019': 'MAFIASCUM_2019_original.zip',
+  'spyridis-2024': 'SPYRIDIS_2024_original.xlsx',
+  'meajor-2025': 'MEAJOR_2025_original.csv',
+  'monaro-2022': 'MONARO_2022_original.csv',
+  'mu3d-2019': 'MU3D_2019_original.zip',
+  'open-2015': 'OPEN_2015_original.zip',
+  'ott-2011': 'OTT_2011_original.zip',
+  'ott-2013': 'OTT_2013_original.zip',
+  'patra-2025': 'PATRA_2025_original.zip',
+  'pops-2017': 'POPS_2017_original.zip',
+  'real-t-2015': 'REAL_T_2015_original.zip',
+  'ru-frdc-2022': 'RU_FRDC_2022_original.zip',
+  'sarzynska-2023': 'SARZYNSKA_2023_original.zip',
+  'sbu-2020': 'SBU_2020_original.zip',
+  'sharma-2025': 'SHARMA_2025_original.csv',
+  'soldner-2022': 'SOLDNER_2022_original.csv',
+  'trec-2005': 'TREC_2005_original.zip',
+}
+
 interface DatasetCsvPreviewResponse {
   headers: string[]
   fullRows: string[][]
@@ -661,7 +705,17 @@ function getCsvFilePath(datasetId: string): string | null {
   const normalized = path.normalize(sourcePath)
   if (normalized.startsWith('..')) return null
 
-  return path.join(datasetCsvRoot, normalized)
+  return path.join(datasetCsvRoot, 'standardized', normalized)
+}
+
+function getOriginalFilePath(datasetId: string): string | null {
+  const sourcePath = ORIGINAL_SOURCES[datasetId]
+  if (!sourcePath) return null
+
+  const normalized = path.normalize(sourcePath)
+  if (normalized.startsWith('..')) return null
+
+  return path.join(datasetCsvRoot, 'original', normalized)
 }
 
 function sendCsv(response: import('node:http').ServerResponse, filename: string, content: string) {
@@ -671,6 +725,18 @@ function sendCsv(response: import('node:http').ServerResponse, filename: string,
     'Access-Control-Allow-Origin': '*',
   })
   response.end(content)
+}
+
+function contentTypeForOriginal(fileName: string): string {
+  const ext = path.extname(fileName).toLowerCase()
+
+  if (ext === '.zip') return 'application/zip'
+  if (ext === '.tar') return 'application/x-tar'
+  if (ext === '.xlsx') {
+    return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  }
+  if (ext === '.csv') return 'text/csv; charset=utf-8'
+  return 'application/octet-stream'
 }
 
 const server = createServer((request, response) => {
@@ -774,6 +840,35 @@ const server = createServer((request, response) => {
     stream.on('error', () => {
       if (!response.headersSent) {
         json(response, 500, { error: 'Failed to read dataset CSV' })
+      } else {
+        response.end()
+      }
+    })
+    stream.pipe(response)
+    return
+  }
+
+  if (url.pathname.startsWith('/api/download-original-dataset/')) {
+    const datasetId = decodeURIComponent(url.pathname.replace('/api/download-original-dataset/', ''))
+    const originalPath = getOriginalFilePath(datasetId)
+
+    if (!originalPath) {
+      json(response, 404, { error: 'Original dataset not found' })
+      return
+    }
+
+    const fileName = path.basename(originalPath)
+
+    response.writeHead(200, {
+      'Content-Type': contentTypeForOriginal(fileName),
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Access-Control-Allow-Origin': '*',
+    })
+
+    const stream = createReadStream(originalPath)
+    stream.on('error', () => {
+      if (!response.headersSent) {
+        json(response, 500, { error: 'Failed to read original dataset' })
       } else {
         response.end()
       }

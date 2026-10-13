@@ -36,7 +36,6 @@ export function DatasetPage() {
   const TABLE_CAP = 250
   const [expanded, setExpanded] = useState(false)
   const [dataVersion, setDataVersion] = useState<'standardized' | 'original'>('standardized')
-  const [originalDownloadNotice, setOriginalDownloadNotice] = useState('')
   const [citationStyle, setCitationStyle] = useState<CitationStyleId>('apa')
   const [citationPreview, setCitationPreview] = useState('')
   const [citationPreviewError, setCitationPreviewError] = useState('')
@@ -133,8 +132,12 @@ export function DatasetPage() {
     a.click()
   }
 
-  const downloadOriginalCsv = () => {
-    setOriginalDownloadNotice('Original dataset is not yet available.')
+  const downloadOriginalDataset = () => {
+    if (!dataset) return
+    const url = `${apiBaseUrl}/api/download-original-dataset/${encodeURIComponent(dataset.id)}`
+    const a = document.createElement('a')
+    a.href = url
+    a.click()
   }
 
   const downloadSelectedCsv = () => {
@@ -142,7 +145,7 @@ export function DatasetPage() {
       downloadCsv()
       return
     }
-    downloadOriginalCsv()
+    downloadOriginalDataset()
   }
 
   const exportCitation = () => {
@@ -335,7 +338,6 @@ export function DatasetPage() {
             value={dataVersion}
             onChange={(event) => {
               setDataVersion(event.target.value as 'standardized' | 'original')
-              setOriginalDownloadNotice('')
             }}
           >
             <option value="standardized">Standardized</option>
@@ -344,7 +346,7 @@ export function DatasetPage() {
           <button type="button" className="csv-toggle-btn" onClick={downloadSelectedCsv}>
             {dataVersion === 'standardized'
               ? `Download standardized CSV (${totalRows.toLocaleString()} rows)`
-              : 'Download original CSV'}
+              : 'Download original dataset'}
           </button>
           {dataVersion === 'standardized' && csvPreview && availableRows > INITIAL_ROWS && (
             <button
@@ -358,11 +360,8 @@ export function DatasetPage() {
             </button>
           )}
         </div>
-        {originalDownloadNotice ? (
-          <p className="download-placeholder-note" role="status">{originalDownloadNotice}</p>
-        ) : null}
         {dataVersion === 'original' ? (
-          <p className="csv-preview-caption">Original dataset preview is not yet available.</p>
+          <p className="csv-preview-caption">Preview is only available for the standardized CSV. Use the button above to download the original file.</p>
         ) : csvPreviewError ? (
           <p className="csv-preview-caption">{csvPreviewError}</p>
         ) : csvPreviewLoading ? (
