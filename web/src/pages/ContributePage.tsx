@@ -33,7 +33,8 @@ export function ContributePage() {
 
     const subject = encodeURIComponent(`Dataset contribution: ${datasetName}`)
     const body = encodeURIComponent(lines.join('\n'))
-    window.location.href = `mailto:l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it?subject=${subject}&body=${body}`
+    // window.location.href = `mailto:l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it?subject=${subject}&body=${body}`
+    window.location.href = `mailto:placeholder@example.com?subject=${subject}&body=${body}`
   }
 
   return (

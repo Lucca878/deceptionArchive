@@ -69,7 +69,8 @@ export function BulkInspectPage() {
   const [citationPreviewError, setCitationPreviewError] = useState('')
   const [citationPreviewLoading, setCitationPreviewLoading] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
-  const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
+  // const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
+  const issueRecipients = 'placeholder@example.com'
   const selectedDatasetIds = useMemo(() => datasets.map((dataset) => dataset.id), [datasets])
   const selectedDatasetKey = selectedDatasetIds.join(',')
   const isTextLikeHeader = (header: string) => header.trim().toLowerCase().includes('text')

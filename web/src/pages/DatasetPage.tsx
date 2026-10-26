@@ -42,7 +42,8 @@ export function DatasetPage() {
   const [citationPreviewLoading, setCitationPreviewLoading] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
   const citationPreviewRows = Math.min(10, Math.max(3, citationPreview.split('\n').length))
-  const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
+  // const issueRecipients = 'l.j.pfruender@tilburguniversity.edu,Bennett.Kleinberg@tilburguniversity.edu,R.Loconte@tilburguniversity.edu,caterina.borgese@studenti.unicz.it'
+  const issueRecipients = 'placeholder@example.com'
   const isTextLikeHeader = (header: string) => header.trim().toLowerCase().includes('text')
   const metadataRows = dataset
     ? [
