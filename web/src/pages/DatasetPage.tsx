@@ -58,7 +58,7 @@ export function DatasetPage() {
         { label: 'Sub-topic', value: toSentenceCase(dataset.metadata.topic) },
         { label: 'Type of deception', value: toSentenceCase(dataset.metadata.typeOfDeception) },
         {
-          label: 'Truthful/deceptive proportion',
+          label: 'Truthful/deceptive ratio',
           value: dataset.metadata.truthfulDeceptiveProportion
             ? formatProportion(dataset.metadata.truthfulDeceptiveProportion)
             : '',
@@ -66,10 +66,6 @@ export function DatasetPage() {
         { label: 'Source', value: toSentenceCase(sourceAndResearchDesign) },
         { label: 'Within/between design', value: toSentenceCase(dataset.metadata.withinOrBetweenDesign) },
         { label: 'Format', value: toSentenceCase(dataset.metadata.format) },
-        {
-          label: 'Documented in academic outlet',
-          value: toSentenceCase(dataset.metadata.documentedInAcademicOutlet),
-        },
       ]
     : []
   const visibleRows = csvPreview

@@ -27,7 +27,6 @@ const TITLE_CASE_FIELD_KEYS = new Set([
   'sourceAndResearchDesign',
   'withinOrBetweenDesign',
   'format',
-  'documentedInAcademicOutlet',
 ])
 
 const FIELDS: { label: string; key: string }[] = [
@@ -38,11 +37,10 @@ const FIELDS: { label: string; key: string }[] = [
   { label: 'Macro topic', key: 'topicStandardized' },
   { label: 'Sub-topic', key: 'topic' },
   { label: 'Type of deception', key: 'typeOfDeception' },
-  { label: 'Truthful/deceptive proportion', key: 'truthfulDeceptiveProportion' },
+  { label: 'Truthful/deceptive ratio', key: 'truthfulDeceptiveProportion' },
   { label: 'Source & research design', key: 'sourceAndResearchDesign' },
   { label: 'Within/between design', key: 'withinOrBetweenDesign' },
   { label: 'Format', key: 'format' },
-  { label: 'Documented in academic outlet', key: 'documentedInAcademicOutlet' },
 ]
 
 export function BulkInspectPage() {

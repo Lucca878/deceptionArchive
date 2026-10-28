@@ -15,91 +15,91 @@ import { EXPLICIT_CITATION_CATALOG } from './citationCatalogData.ts'
 const PREVIEW_ROW_CAP = 250
 
 const DATASET_SOURCES: Record<string, string> = {
-  'apd-2025': 'APD_2025.csv',
-  'atsface-2023': 'ATSFACE_2023.csv',
-  'blc-2019': 'BLC_2019.csv',
-  'blt-c-2016': 'BLT_C_2016.csv',
-  'bluff-2020': 'BLUFF_2020.csv',
-  'ccd-2014': 'CCD_2014.csv',
-  'csc-2005': 'CSC_2005.csv',
-  'csi-2014': 'CSI_2014.csv',
-  'decop-en-2020': 'DECOP_EN_2020.csv',
-  'decop-it-2020': 'DECOP_IT_2020.csv',
-  'decour-2012': 'DECOUR_2012.csv',
-  'defabel-2024': 'DEFABEL_2024.csv',
-  'defabel-2025': 'DEFABEL_2025.csv',
-  'derev-2014': 'DEREV_2014.csv',
-  'derev-2020': 'DEREV_2020.csv',
-  'difraud-2024': 'DIFRAUD_2024.csv',
-  'diplomacy-2020': 'DIPLOMACY_2020.csv',
-  'hip-2022': 'HIP_2022.csv',
-  'int-2021': 'INT_2021.csv',
-  'kleinberg-2018': 'KLEINBERG_2018.csv',
-  'legaleye-2025': 'LEGALEYE_2025.csv',
-  'li-2014': 'LI_2014.csv',
-  'loconte-2025': 'LOCONTE_2025.csv',
-  'mafiagame-2022': 'MAFIAGAME_2022.csv',
-  'mafiascum-2019': 'MAFIASCUM_2019.csv',
-  'spyridis-2024': 'SPYRIDIS_2024.csv',
-  'meajor-2025': 'MEAJOR_2025.csv',
-  'monaro-2022': 'MONARO_2022.csv',
-  'mu3d-2019': 'MU3D_2019.csv',
-  'open-2015': 'OPEN_2015.csv',
-  'ott-2011': 'OTT_2011.csv',
-  'ott-2013': 'OTT_2013.csv',
-  'patra-2025': 'PATRA_2025.csv',
-  'pops-2017': 'POPS_2017.csv',
-  'real-t-2015': 'REAL_T_2015.csv',
-  'ru-frdc-2022': 'RU_FRDC_2022.csv',
-  'sarzynska-2023': 'SARZYNSKA_2023.csv',
-  'sbu-2020': 'SBU_2020.csv',
-  'sharma-2025': 'SHARMA_2025.csv',
-  'soldner-2022': 'SOLDNER_2022.csv',
-  'trec-2005': 'TREC_2005.csv',
+  'apd-2025': 'apd-2025.csv',
+  'atsface-2023': 'atsface-2023.csv',
+  'blc-2019': 'blc-2019.csv',
+  'blt-c-2016': 'blt-c-2016.csv',
+  'bluff-2020': 'bluff-2020.csv',
+  'ccd-2014': 'ccd-2014.csv',
+  'csc-2005': 'csc-2005.csv',
+  'csi-2014': 'csi-2014.csv',
+  'decop-en-2020': 'decop-en-2020.csv',
+  'decop-it-2020': 'decop-it-2020.csv',
+  'decour-2012': 'decour-2012.csv',
+  'defabel-2024': 'defabel-2024.csv',
+  'defabel-2025': 'defabel-2025.csv',
+  'derev-2014': 'derev-2014.csv',
+  'derev-2020': 'derev-2020.csv',
+  'difraud-2024': 'difraud-2024.csv',
+  'diplomacy-2020': 'diplomacy-2020.csv',
+  'hip-2022': 'hip-2022.csv',
+  'int-2021': 'int-2021.csv',
+  'kleinberg-2018': 'kleinberg-2018.csv',
+  'legaleye-2025': 'legaleye-2025.csv',
+  'li-2014': 'li-2014.csv',
+  'loconte-2025': 'loconte-2025.csv',
+  'mafiagame-2022': 'mafiagame-2022.csv',
+  'mafiascum-2019': 'mafiascum-2019.csv',
+  'spyridis-2024': 'spyridis-2024.csv',
+  'meajor-2025': 'meajor-2025.csv',
+  'monaro-2022': 'monaro-2022.csv',
+  'mu3d-2019': 'mu3d-2019.csv',
+  'open-2015': 'open-2015.csv',
+  'ott-2011': 'ott-2011.csv',
+  'ott-2013': 'ott-2013.csv',
+  'patra-2025': 'patra-2025.csv',
+  'pops-2017': 'pops-2017.csv',
+  'real-t-2015': 'real-t-2015.csv',
+  'ru-frdc-2022': 'ru-frdc-2022.csv',
+  'sarzynska-2023': 'sarzynska-2023.csv',
+  'sbu-2020': 'sbu-2020.csv',
+  'sharma-2025': 'sharma-2025.csv',
+  'soldner-2022': 'soldner-2022.csv',
+  'trec-2005': 'trec-2005.csv',
 }
 
 const ORIGINAL_SOURCES: Record<string, string> = {
-  'apd-2025': 'APD_2025_original.xlsx',
-  'atsface-2023': 'ATSFACE_2023_original.zip',
-  'blc-2019': 'BLC_2019_original.zip',
-  'blt-c-2016': 'BLT_C_2016_original.tar',
-  'bluff-2020': 'BLUFF_2020_original.csv',
-  'ccd-2014': 'CCD_2014_original.tar',
-  'csc-2005': 'CSC_2005_original.tar',
-  'csi-2014': 'CSI_2014_original.zip',
-  'decop-en-2020': 'DECOP_EN_2020_original.xlsx',
-  'decop-it-2020': 'DECOP_IT_2020_original.xlsx',
-  'decour-2012': 'DECOUR_2012_original.zip',
-  'defabel-2024': 'DEFABEL_2024_original.zip',
-  'defabel-2025': 'DEFABEL_2025_original.zip',
-  'derev-2014': 'DEREV_2014_original.zip',
-  'derev-2020': 'DEREV_2020_original.zip',
-  'difraud-2024': 'DIFRAUD_2024_original.zip',
-  'diplomacy-2020': 'DIPLOMACY_2020_original.zip',
-  'hip-2022': 'HIP_2022_original.zip',
-  'int-2021': 'INT_2021_original.zip',
-  'kleinberg-2018': 'KLEINBERG_2018_original.csv',
-  'legaleye-2025': 'LEGALEYE_2025_original.xlsx',
-  'li-2014': 'LI_2014_original.zip',
-  'loconte-2025': 'LOCONTE_2025_original.zip',
-  'mafiagame-2022': 'MAFIAGAME_2022_original.zip',
-  'mafiascum-2019': 'MAFIASCUM_2019_original.zip',
-  'spyridis-2024': 'SPYRIDIS_2024_original.xlsx',
-  'meajor-2025': 'MEAJOR_2025_original.csv',
-  'monaro-2022': 'MONARO_2022_original.csv',
-  'mu3d-2019': 'MU3D_2019_original.zip',
-  'open-2015': 'OPEN_2015_original.zip',
-  'ott-2011': 'OTT_2011_original.zip',
-  'ott-2013': 'OTT_2013_original.zip',
-  'patra-2025': 'PATRA_2025_original.zip',
-  'pops-2017': 'POPS_2017_original.zip',
-  'real-t-2015': 'REAL_T_2015_original.zip',
-  'ru-frdc-2022': 'RU_FRDC_2022_original.zip',
-  'sarzynska-2023': 'SARZYNSKA_2023_original.zip',
-  'sbu-2020': 'SBU_2020_original.zip',
-  'sharma-2025': 'SHARMA_2025_original.csv',
-  'soldner-2022': 'SOLDNER_2022_original.csv',
-  'trec-2005': 'TREC_2005_original.zip',
+  'apd-2025': 'apd-2025_original.xlsx',
+  'atsface-2023': 'atsface-2023_original.zip',
+  'blc-2019': 'blc-2019_original.zip',
+  'blt-c-2016': 'blt-c-2016_original.tar',
+  'bluff-2020': 'bluff-2020_original.csv',
+  'ccd-2014': 'ccd-2014_original.tar',
+  'csc-2005': 'csc-2005_original.tar',
+  'csi-2014': 'csi-2014_original.zip',
+  'decop-en-2020': 'decop-en-2020_original.xlsx',
+  'decop-it-2020': 'decop-it-2020_original.xlsx',
+  'decour-2012': 'decour-2012_original.zip',
+  'defabel-2024': 'defabel-2024_original.zip',
+  'defabel-2025': 'defabel-2025_original.zip',
+  'derev-2014': 'derev-2014_original.zip',
+  'derev-2020': 'derev-2020_original.zip',
+  'difraud-2024': 'difraud-2024_original.zip',
+  'diplomacy-2020': 'diplomacy-2020_original.zip',
+  'hip-2022': 'hip-2022_original.zip',
+  'int-2021': 'int-2021_original.zip',
+  'kleinberg-2018': 'kleinberg-2018_original.csv',
+  'legaleye-2025': 'legaleye-2025_original.xlsx',
+  'li-2014': 'li-2014_original.zip',
+  'loconte-2025': 'loconte-2025_original.zip',
+  'mafiagame-2022': 'mafiagame-2022_original.zip',
+  'mafiascum-2019': 'mafiascum-2019_original.zip',
+  'spyridis-2024': 'spyridis-2024_original.xlsx',
+  'meajor-2025': 'meajor-2025_original.csv',
+  'monaro-2022': 'monaro-2022_original.csv',
+  'mu3d-2019': 'mu3d-2019_original.zip',
+  'open-2015': 'open-2015_original.zip',
+  'ott-2011': 'ott-2011_original.zip',
+  'ott-2013': 'ott-2013_original.zip',
+  'patra-2025': 'patra-2025_original.zip',
+  'pops-2017': 'pops-2017_original.zip',
+  'real-t-2015': 'real-t-2015_original.zip',
+  'ru-frdc-2022': 'ru-frdc-2022_original.zip',
+  'sarzynska-2023': 'sarzynska-2023_original.zip',
+  'sbu-2020': 'sbu-2020_original.zip',
+  'sharma-2025': 'sharma-2025_original.csv',
+  'soldner-2022': 'soldner-2022_original.csv',
+  'trec-2005': 'trec-2005_original.zip',
 }
 
 interface DatasetCsvPreviewResponse {
@@ -248,57 +248,29 @@ const datasetCsvRoot = process.env.LOL_DATASET_DIR?.trim()
   : defaultDatasetCsvRoot
 const datasetCsvParentDir = path.dirname(datasetCsvRoot)
 const metadataCsvCandidates = [
-  path.join(datasetCsvParentDir, 'Deception_archive_metadata.csv'),
-  path.join(datasetCsvParentDir, 'Deception archive_metadata.csv'),
-  path.join(webDataRoot, 'LOL', 'Deception_archive_metadata.csv'),
-  path.join(webDataRoot, 'LOL', 'Deception archive_metadata.csv'),
+  path.join(datasetCsvParentDir, 'deception_archive_metadata.csv'),
+  path.join(webDataRoot, 'LOL', 'deception_archive_metadata.csv'),
 ]
 
 interface MetadataCsvRow {
-  Dataset?: string
   Dataset_id?: string
-  Key?: string
-  'Within or Between design'?: string
-  Reuse?: string
-  'Open-source'?: string
-  'Ground truth'?: string
-  'Dataset documented in academic outlet'?: string
-  'No of statements or utterances'?: string
-  'Truthful / deceptive proportion'?: string
-  Format?: string
+  Paper?: string
+  'Publication year'?: string
   Language?: string
-  Topic?: string
-  'Topic standardized'?: string
+  'Number of statements'?: string
+  'Truthful / deceptive ratio'?: string
+  'Within or between design'?: string
+  Format?: string
+  'Macro topic'?: string
+  'Sub-topic'?: string
   'Type of deception'?: string
-  Source?: string
-  'Dataset available'?: string
-  Note?: string
+  'Ground truth'?: string
+  'Source and research design'?: string
 }
 
 function normalizeValue(value: unknown): string {
   if (typeof value !== 'string') return ''
   return value.replace(/\s+/g, ' ').trim()
-}
-
-function csvFileCodeFromSourcePath(relPath: string): string {
-  const base = path.basename(relPath, path.extname(relPath)).toUpperCase()
-  return base
-    .replace(/^COPIA DI /, '')
-    .replace(/\s+/g, '_')
-    .replace(/-+/g, '_')
-    .replace(/_ID$/, '')
-    .replace(/_CLEAN$/, '')
-}
-
-function buildDatasetIdByMetadataCode(): Record<string, string> {
-  const byCode: Record<string, string> = {}
-
-  for (const [datasetId, relPath] of Object.entries(DATASET_SOURCES)) {
-    const code = csvFileCodeFromSourcePath(relPath)
-    byCode[code] = datasetId
-  }
-
-  return byCode
 }
 
 async function loadMetadataRows(): Promise<Record<string, MetadataCsvRow>> {
@@ -327,27 +299,19 @@ async function loadMetadataRows(): Promise<Record<string, MetadataCsvRow>> {
     relax_quotes: true,
   }) as MetadataCsvRow[]
 
-  const datasetIdByCode = buildDatasetIdByMetadataCode()
   const mapped: Record<string, MetadataCsvRow> = {}
   const unknownCodes = new Set<string>()
   const duplicateDatasetIds = new Set<string>()
-  const seenCodesByDatasetId = new Map<string, string>()
 
   for (const row of rows) {
-    const code = normalizeValue(row.Dataset_id).toUpperCase().replace(/\s+/g, '_')
-    if (!code) continue
-    const datasetId = datasetIdByCode[code]
-    if (!datasetId) {
-      unknownCodes.add(code)
+    const datasetId = normalizeValue(row.Dataset_id).toLowerCase()
+    if (!datasetId) continue
+    if (!(datasetId in DATASET_SOURCES)) {
+      unknownCodes.add(datasetId)
       continue
     }
 
-    const alreadySeenCode = seenCodesByDatasetId.get(datasetId)
-    if (alreadySeenCode && alreadySeenCode !== code) {
-      duplicateDatasetIds.add(datasetId)
-    }
-
-    seenCodesByDatasetId.set(datasetId, code)
+    if (mapped[datasetId]) duplicateDatasetIds.add(datasetId)
     mapped[datasetId] = row
   }
 
@@ -390,19 +354,19 @@ function mergeDatasetMetadata(
   statementCount: number,
   row: MetadataCsvRow,
 ): DatasetRecord {
-  const sourceAndResearchDesign = normalizeValue(row.Source)
-  const topic = normalizeValue(row.Topic)
-  const topicStandardized = normalizeValue(row['Topic standardized'])
+  const sourceAndResearchDesign = normalizeValue(row['Source and research design'])
+  const topic = normalizeValue(row['Sub-topic'])
+  const topicStandardized = normalizeValue(row['Macro topic'])
   const language = normalizeValue(row.Language)
   const typeOfDeception = normalizeValue(row['Type of deception'])
   const groundTruth = normalizeValue(row['Ground truth'])
-  const withinOrBetweenDesign = normalizeValue(row['Within or Between design'])
+  const withinOrBetweenDesign = normalizeValue(row['Within or between design'])
   const format = normalizeValue(row.Format)
-  const documentedInAcademicOutlet = normalizeValue(row['Dataset documented in academic outlet'])
-  const truthfulDeceptiveProportion = normalizeValue(row['Truthful / deceptive proportion'])
-  const note = normalizeValue(row.Note)
-  const key = normalizeValue(row.Key)
-  const datasetName = normalizeValue(row.Dataset)
+  const documentedInAcademicOutlet = ''
+  const truthfulDeceptiveProportion = normalizeValue(row['Truthful / deceptive ratio'])
+  const note = ''
+  const key = ''
+  const datasetName = normalizeValue(row.Paper)
   const topicTagParts = topic
     .split(',')
     .map((value) => value.trim())
@@ -446,12 +410,12 @@ function mergeDatasetMetadata(
       truthfulDeceptiveProportion,
       note,
       key,
-      openSource: normalizeValue(row['Open-source']),
-      reuse: normalizeValue(row.Reuse),
-      datasetAvailable: normalizeValue(row['Dataset available']),
+      openSource: '',
+      reuse: '',
+      datasetAvailable: '',
     },
     originalSource: {
-      label: normalizeValue(row['Dataset available']) || 'Unknown',
+      label: 'Unknown',
       url: '#',
     },
   }
@@ -506,7 +470,7 @@ async function initializeSummaryPayload() {
       throw new Error(`Metadata CSV row missing for dataset id: ${datasetId}`)
     }
 
-    const statementCount = parseStatementCount(metadataRow['No of statements or utterances'])
+    const statementCount = parseStatementCount(metadataRow['Number of statements'])
 
     return mergeDatasetMetadata(datasetId, statementCount, metadataRow)
   })

@@ -25,16 +25,8 @@ export function normalizeLolRow(row: RawLolDatasetRow): NormalizedLolDatasetRow 
 
 export const LOL_TERMS: TermEntry[] = [
   {
-    term: 'Dataset',
-    definition: 'Dataset name in the New Downloaded metadata table.',
-  },
-  {
     term: 'Dataset_id',
     definition: 'Dataset identifier used to map metadata and row files.',
-  },
-  {
-    term: 'Key',
-    definition: 'Internal key attached to the dataset entry.',
   },
   {
     term: 'Within or between design',
@@ -42,17 +34,12 @@ export const LOL_TERMS: TermEntry[] = [
       'Whether truthful and deceptive conditions are compared within the same participant or between different participant groups.',
   },
   {
-    term: 'Dataset documented in academic outlet',
-    definition:
-      'Notes if there is a paper, proceedings entry, or similar academic source that documents the dataset.',
-  },
-  {
     term: 'Number of statements',
     definition:
       'Total number of statements or utterances reported for the dataset.',
   },
   {
-    term: 'Truthful / deceptive proportion',
+    term: 'Truthful / deceptive ratio',
     definition:
       'Class balance between truthful and deceptive statements, typically expressed as a ratio or percentage.',
   },
@@ -82,10 +69,5 @@ export const LOL_TERMS: TermEntry[] = [
     term: 'Source and research design',
     definition:
       'Where the data comes from and how collection was designed.',
-  },
-  {
-    term: 'Note',
-    definition:
-      'Additional notes, caveats, or download instructions from the source table.',
   },
 ]
